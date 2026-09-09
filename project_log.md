@@ -16,6 +16,7 @@
 12. UNIQUE on dose_logs makes check/uncheck idempotent
 13. JWT delivered via httpOnly (not stored locally or in state, unreadable by JS = secure and persists across refresh)
 14. updated token expiry to 30d with above security and avg protocol length equal to 4 weeks (minimize user friction)
+15. committed jwt payload to {id, role}
 
 ## Open Items
 --
