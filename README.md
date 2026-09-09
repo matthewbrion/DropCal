@@ -14,6 +14,12 @@ Node/Express, PostgreSQL, JWT auth, React + Vite
 ## Setup
 1. `npm install`
 2. Create `.env` with:
+    - `DATABASE_URL`
+    - `JWT_SECRET`
 3. `psql -U postgres -f db/schema.sql`
 4. `node db/seed.js`
 5. `npm run dev`
+
+## API
+
+## Limitations
