@@ -1,0 +1,29 @@
+{
+  "name": "dropcal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "imports": {
+    "#*": "./*.js"
+  },
+  "scripts": {
+    "dev": "node --env-file .env --watch server.js",
+    "db:schema": "psql -U postgres -d dropcal -f ./db/schema.sql",
+    "db:seed": "node --env-file .env db/seed.js",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2",
+    "vitest": "^5.0.0"
+  }
+}
