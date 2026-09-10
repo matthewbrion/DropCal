@@ -11,7 +11,7 @@
     "dev": "node --env-file .env --watch server.js",
     "db:schema": "psql -U postgres -d dropcal -f ./db/schema.sql",
     "db:seed": "node --env-file .env db/seed.js",
-    "test": "vitest"
+    "test": "node --env-file=.env ./node_modules/vitest/vitest.mjs run"
   },
   "keywords": [],
   "author": "",
