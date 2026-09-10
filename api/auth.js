@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { createUser, getUserByEmail } from '#db/queries/users';
+import { createUser, getUserByEmail, getUserById } from '#db/queries/users';
 import { createToken } from '#utils/jwt';
+import getUserFromToken from '#middleware/getUserFromToken';
 
 const router = Router();
 
@@ -39,6 +40,12 @@ router.post('/login', async (req, res) => {
     } catch (e) {
         res.status(500).send('Something went wrong');
     }
+})
+
+router.get('/me', getUserFromToken, async (req, res) => {
+    const user = await getUserById(req.user.id);
+    if (!user) return res.status(404).send('User not found')
+    res.status(200).json(user);
 })
 
 export default router;
