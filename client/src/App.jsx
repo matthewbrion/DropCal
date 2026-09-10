@@ -1,13 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-
-function RegisterPage() {
-  return <div>Register page</div>;
-}
-
-function LoginPage() {
-  return <div>Login page</div>;
-}
+import Register from './pages/Register';
+import Login from './pages/Login';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -16,8 +10,8 @@ function AppRoutes() {
   }
   return (
     <Routes>
-      <Route path='/register' element={<RegisterPage />} />
-      <Route path='/login' element={<LoginPagePage />} />
+      <Route path='/register' element={<Register />} />
+      <Route path='/login' element={<Login />} />
     </Routes>
   );
 }
