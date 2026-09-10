@@ -14,10 +14,22 @@ export async function createUser(name, email, passwordHash, role) {
 
 export async function getUserByEmail(email) {
     const sql = `
-    SELECT *
+    SELECT id, name, email, password_hash, role, created_at
     FROM users
     WHERE email = $1
     `;
     const { rows: [user] } = await db.query(sql, [email]);
     return user;
+}
+
+export async function getUserById(id) {
+  const sql = `
+  SELECT id, name, email, role
+  FROM users
+  WHERE id = $1
+  `;
+  const {
+    rows: [user],
+  } = await db.query(sql, [id]);
+  return user;
 }

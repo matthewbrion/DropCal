@@ -40,3 +40,5 @@ router.post('/login', async (req, res) => {
         res.status(500).send('Something went wrong');
     }
 })
+
+export default router;
