@@ -4,7 +4,7 @@ export async function registerUser({ name, email, password }) {
     const res = await fetch(`${BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, passowrd }),
+        body: JSON.stringify({ name, email, password }),
     });
     if (res.status === 201) {
         return res.json();
@@ -22,6 +22,10 @@ export async function loginUser({ email, password }) {
         credentials: 'include',
         body: JSON.stringify({ email, password }),
     });
+    if (!res.ok) {
+        throw new Error('Invalid email or password.');
+    }
+    return res.json();
 }
 
 export async function getCurrentUser() {

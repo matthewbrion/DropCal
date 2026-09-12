@@ -18,6 +18,7 @@
     https://expressjs.com/en/resources/middleware/cookie-parser/
 14. updated token expiry to 30d with above security and avg protocol length equal to 4 weeks (minimize user friction)
 15. committed jwt payload to {id, role}
+16. protected routes have 1 parent (scalable with more additions)
 
 ## Open Items
 --

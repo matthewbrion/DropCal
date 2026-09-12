@@ -23,3 +23,4 @@ Node/Express, PostgreSQL, JWT auth, React + Vite
 ## API
 
 ## Limitations
+The redirect on protected routes is a UX guard, not a security boundary.  JWT handles server-side access control.
