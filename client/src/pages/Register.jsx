@@ -59,7 +59,7 @@ function Register() {
                             onChange={(n) => setPassword(n.target.value)}
                         />
                     </label>
-                    {error && <p role='alert'>{error}</p>}
+                    {error && <p role='alert' className='text-sm text-error bg-error-surface rounded-[10px] px-3.5 py-2.5'>{error}</p>}
                     <button type='submit' className='!mt-2 w-full h-14 text-sm rounded-[12px] font-semibold tracking-wide text-on-primary bg-primary hover:bg-primary-active transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-active'
                     >
                         Submit

@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+/* theme derived from Google Stitch first draft https://stitch.withgoogle.com/projects/3591377135045226907 */
+
 @theme {
   --color-surface: #F8FAFC;
   --color-surface: #FFFFFF;
@@ -17,4 +19,38 @@
   --color-success: #F0F5F2;
   --color-error: #9F3A2F;
   --color-error-surface: #FBEEEC;
+
+  --text-headline-xl: 34px;
+  --text-headline-xl--line-height: 42px;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-lg: 26px;
+  --text-headline-lg--line-height: 34px;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-body-xl: 19px;
+  --text-body-xl--line-height: 30px;
+  --text-body-lg: 17px;
+  --text-body-lg--line-height: 28px;
+  --text-body-md: 15px;
+  --text-body-md--line-height: 24px;
+  --text-label-lg: 17px;
+  --text-label-lg--line-height: 24px;
+  --text-label-md: 15px;
+  --text-label-md--line-height: 22px;
+  --text-label-sm: 13px;
+  --text-label-sm--line-height: 18px;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --spacing-touch-min: 3rem;
+  --spacing-touch-target: 3.5rem;
+  --spacing-gutter-mobile: 1.25rem;
+  --spacing-gutter-desktop: 2.5rem;
+  --spacing-card-padding: 1.75rem;
+  --spacing-section-gap: 2.5rem;
+  --spacing-flow-gap: 1rem;
 }
