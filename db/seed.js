@@ -10,7 +10,6 @@ async function seed() {
         const patient = await createUser('Eleanor Vance', 'vance@example.com', hash, 'patient');
         const patient2 = await createUser('David Chen', 'chen@example.com', hash, 'patient');
         
-        
         const { rows: [pred] } = await db.query(
             `INSERT INTO medications
             (name, form)
