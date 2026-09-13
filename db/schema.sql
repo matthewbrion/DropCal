@@ -32,8 +32,9 @@ CREATE TABLE protocol_weeks (
     protocol_id INTEGER NOT NULL REFERENCES protocols(id) ON DELETE CASCADE,
     week_number INTEGER NOT NULL CHECK (week_number > 0),
     medication_id INTEGER NOT NULL REFERENCES medications(id),
+    eye TEXT NOT NULL CHECK (eye IN ('left', 'right', 'both')),
     frequency_per_day INTEGER NOT NULL CHECK (frequency_per_day > 0),
-    UNIQUE (protocol_id, week_number, medication_id)
+    UNIQUE (protocol_id, week_number, medication_id, eye)
 );
 
 CREATE TABLE patient_protocols (
