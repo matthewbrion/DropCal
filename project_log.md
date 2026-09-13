@@ -24,3 +24,4 @@
 ## Open Items
 --
 1. POST /api/patient-protocols checks doctor_id has role ='doctor' but doesn't check the requestor's role
+2. add dose_logs to TRUNCATE to avoid missing in the future
