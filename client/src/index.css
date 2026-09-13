@@ -4,7 +4,7 @@
 
 @theme {
   --color-surface: #F8FAFC;
-  --color-surface: #FFFFFF;
+  --color-surface-card: #FFFFFF;
   --color-border-subtle: #E2E8F0;
 
   --color-ink: #1E293B;
@@ -16,7 +16,7 @@
   --color-on-primary: #FFFFFF;
 
   --color-success: #487957;
-  --color-success: #F0F5F2;
+  --color-success-surface: #F0F5F2;
   --color-error: #9F3A2F;
   --color-error-surface: #FBEEEC;
 
