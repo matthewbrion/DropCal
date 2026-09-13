@@ -11,7 +11,7 @@ import db from '#db/client';
 //confirms if someone without creds blocked
 
 beforeAll(async () => {
-    execSync('node db/seed.js', { stdio: 'inherit' });
+    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 

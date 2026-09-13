@@ -34,6 +34,7 @@ router.get('/me', getUserFromToken, async (req, res) => {
 
     } catch (e) {
         res.status(500).send('Something went wrong');
+        console.log(e);
     }
 });
 

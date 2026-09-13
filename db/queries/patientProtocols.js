@@ -1,3 +1,5 @@
+import db from "#db/client";
+
 export async function getPatientProtocolByPatientId(patientId) {
     const sql = `
     SELECT
