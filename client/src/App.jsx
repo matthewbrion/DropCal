@@ -8,7 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 function AppRoutes() {
   const { loading } = useAuth();
   if (loading) {
-    return <div>Loading...</div>
+    return <div className='min-h-screen bg-surface flex items-center justify-center'>
+      <p className='text-body-lg text-ink-muted'>Loading...</p>
+    </div>
   }
   return (
     <Routes>

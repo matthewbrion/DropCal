@@ -120,3 +120,46 @@ export default function Home() {
         </div>
     );
 }
+
+function RoutineLogItem({ medication, isLast }) {
+    //cosmetic toggle currently, dose logging to come
+    const [logged, setLogged] = useState(false);
+
+    function handleToggle() {
+        setLogged(!logged);
+    }
+
+    let borderClass = 'border-b border-border-subtle';
+    if (isLast) {
+        borderClass = '';
+    }
+
+    let buttonBackground = 'bg-surface';
+    if (logged) {
+        buttonBackground = 'bg-success-surface';
+    }
+
+    return (
+        <div className={`flex items-center justify-between py-card-padding px-card-padding ${borderClass}`}>
+            <div>
+                <p className="text-headline-md text-ink">{medication.name}</p>
+                <p className="text-body-md text-ink-muted">
+                    {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
+                </p>
+            </div>
+            <button
+                type='button'
+                onClick={handleToggle}
+                className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${buttonBackground}`}
+                aria-pressed={logged}
+                aria-label={logged ? 'Drops logged' : 'Log drops'}
+                >
+                    {logged ? (
+                        <span className="text-success text-label-md">Done</span>
+                    ) : (
+                        <span className="border border-border-subtle rounded-full h-8 w-8" />
+                    )}
+                </button>
+        </div>
+    );
+}

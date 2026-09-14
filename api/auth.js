@@ -9,6 +9,9 @@ const router = Router();
 router.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).send('Email and password are required');
+        }
         const passwordHash = await bcrypt.hash(password, 10);
         const user = await createUser(name, email, passwordHash, 'patient');
         res.status(201).json(user);
