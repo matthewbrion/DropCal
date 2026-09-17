@@ -1,7 +1,165 @@
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { getMyProtocol } from "../lib/patientProtocols";
+
+function getCurrentWeekNumber(startDate, totalWeeks) {
+    const start = new Date(startDate);
+    const today = new Date();
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const msElapsed = today - start;
+    const weeksElapsed = Math.floor(msElapsed / msPerWeek);
+    const currentWeek = weeksElapsed + 1;
+
+    if (currentWeek > totalWeeks) {
+        return null; //protocol has ended
+    }
+    if (currentWeek < 1) {
+        return 1;
+    }
+    return currentWeek;
+}
+
+function frequencyText(count) {
+    if (count === 1) {
+        return '1 time a day';
+    }
+    return `${count} times a day`;
+}
+
+function eyeLabel(eye) {
+    if (eye === 'both') {
+        return 'Both eyes';
+    }
+    if (eye === 'left') {
+        return 'Left eye';
+    }
+    if (eye === 'right') {
+        return 'Right eye';
+    }
+    return eye;
+}
+
 export default function Home() {
+    const auth = useAuth();
+    const [protocol, setProtocol] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (auth.loading) {
+            return;
+        }
+        getMyProtocol()
+            .then(setProtocol)
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [auth.loading]);
+
+    if (auth.loading || loading) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center">
+                <p className="text-body-lg text-ink-muted">Loading your routine...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center px-gutter-mobile">
+                <p className="text-body-lg text-error">{error}</p>
+            </div>
+        );
+    }
+
+    const hasProtocol = protocol && protocol.weeks.length > 0;
+
+    if (!hasProtocol) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center px-gutter-mobile">
+                <p className="text-body-lg text-ink-muted text-center">
+                    Your doctor hasn't assigned a routine yet.
+                </p>
+            </div>
+        );
+    }
+
+    const currentWeekNumber = getCurrentWeekNumber(protocol.start_date, protocol.weeks.length);
+    const ended = currentWeekNumber === null;
+    const currentWeek = !ended
+        ? protocol.weeks.find((w) => w.week_number === currentWeekNumber)
+        : null;
+
     return (
-        <div>
-            <h1>Home</h1>
+        <div className="min-h-screen bg-surface px-gutter-mobile md:px-gutter-desktop py-section-gap">
+            <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
+                <header className="mb-flow-gap">
+                    <h1 className="text-headline-lg text-ink">{protocol.protocol_name}</h1>
+                    {!ended && (
+                        <p className="text-body-md text-ink-muted mt-1">
+                            Week {currentWeekNumber} of {protocol.weeks.length}
+                        </p>
+                    )}
+                </header>
+
+                {ended ? (
+                    <p className="text-body-lg text-ink-muted">
+                        Your care plan has ended.  Reach out to your doctor with any questions.
+                    </p>
+                ) : (
+                    <div className="bg-surface-card rounded-md">
+                        {currentWeek.medications.map((med, i) => (
+                            <RoutineLogItem
+                                key={med.medication_id}
+                                medication={med}
+                                isLast={i === currentWeek.medications.length - 1}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function RoutineLogItem({ medication, isLast }) {
+    //cosmetic toggle currently, dose logging to come
+    const [logged, setLogged] = useState(false);
+
+    function handleToggle() {
+        setLogged(!logged);
+    }
+
+    let borderClass = 'border-b border-border-subtle';
+    if (isLast) {
+        borderClass = '';
+    }
+
+    let buttonBackground = 'bg-surface';
+    if (logged) {
+        buttonBackground = 'bg-success-surface';
+    }
+
+    return (
+        <div className={`flex items-center justify-between py-card-padding px-card-padding ${borderClass}`}>
+            <div>
+                <p className="text-headline-md text-ink">{medication.name}</p>
+                <p className="text-body-md text-ink-muted">
+                    {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
+                </p>
+            </div>
+            <button
+                type='button'
+                onClick={handleToggle}
+                className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${buttonBackground}`}
+                aria-pressed={logged}
+                aria-label={logged ? 'Drops logged' : 'Log drops'}
+                >
+                    {logged ? (
+                        <span className="text-success text-label-md">Done</span>
+                    ) : (
+                        <span className="border border-border-subtle rounded-full h-8 w-8" />
+                    )}
+                </button>
         </div>
     );
 }

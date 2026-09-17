@@ -22,5 +22,13 @@ Node/Express, PostgreSQL, JWT auth, React + Vite
 
 ## API
 
+### Accounts
+- `POST /api/auth/register` - sign up with your name, email, and a password.
+- `POST /api/auth/login` - log in. keeps you signed in with a cookie, no token to manage yourself.
+- `GET /api/auth/me` - checks who's logged in right now (keeping you logged in when you refresh the page).
+
+### Your Routine
+- `GET /api/patient-protocols/me` - pulls up your eye drop schedule (what to take, which eye, how often, and where you're at in your routine.  if your doctor hasn't set one up yet, expect an empty schedule not an error).
+
 ## Limitations
 The redirect on protected routes is a UX guard, not a security boundary.  JWT handles server-side access control.
