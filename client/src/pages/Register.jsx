@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from "../lib/api";
 
 function Register() {
@@ -65,6 +65,13 @@ function Register() {
                         Submit
                         </button>
                 </form>
+
+                <p className="mt-4 text-sm text-ink-muted text-center">
+                    Already have an account?{' '}
+                    <Link to='/login' className="text-primary font-medium hover:text-primary-active">
+                    Log in
+                    </Link>
+                </p>
             </div>
         </div>
     );

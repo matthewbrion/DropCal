@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getMyProtocol } from "../lib/patiientProtocols";
+import { getMyProtocol } from "../lib/patientProtocols";
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
