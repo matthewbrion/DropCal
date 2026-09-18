@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getMyProtocol } from "../lib/patientProtocols";
+import { getMyProtocol, getTodaysDoseSummary } from "../lib/patientProtocols";
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -42,6 +42,7 @@ function eyeLabel(eye) {
 export default function Home() {
     const auth = useAuth();
     const [protocol, setProtocol] = useState(null);
+    const [today, setToday] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -53,6 +54,16 @@ export default function Home() {
             .then(setProtocol)
             .catch((e) => setError(e.message))
             .finally(() => setLoading(false));
+    }, [auth.loading]);
+
+    useEffect(() => {
+        if (auth.loading) {
+            return;
+        }
+        getTodaysDoseSummary()
+        .then(setToday)
+        .catch((e) => setError(e.message))
+        .finally(() => setLoading(false));
     }, [auth.loading]);
 
     if (auth.loading || loading) {
@@ -85,9 +96,6 @@ export default function Home() {
 
     const currentWeekNumber = getCurrentWeekNumber(protocol.start_date, protocol.weeks.length);
     const ended = currentWeekNumber === null;
-    const currentWeek = !ended
-        ? protocol.weeks.find((w) => w.week_number === currentWeekNumber)
-        : null;
 
     return (
         <div className="min-h-screen bg-surface px-gutter-mobile md:px-gutter-desktop py-section-gap">
@@ -107,11 +115,11 @@ export default function Home() {
                     </p>
                 ) : (
                     <div className="bg-surface-card rounded-md">
-                        {currentWeek.medications.map((med, i) => (
+                        {today.medications.map((med, i) => (
                             <RoutineLogItem
                                 key={med.medication_id}
                                 medication={med}
-                                isLast={i === currentWeek.medications.length - 1}
+                                isLast={i === today.medications.length - 1}
                             />
                         ))}
                     </div>
@@ -122,21 +130,16 @@ export default function Home() {
 }
 
 function RoutineLogItem({ medication, isLast }) {
-    //cosmetic toggle currently, dose logging to come
-    const [logged, setLogged] = useState(false);
-
-    function handleToggle() {
-        setLogged(!logged);
-    }
+    const done = medication.logged_count >= medication.frequency_per_day;
 
     let borderClass = 'border-b border-border-subtle';
     if (isLast) {
         borderClass = '';
     }
 
-    let buttonBackground = 'bg-surface';
-    if (logged) {
-        buttonBackground = 'bg-success-surface';
+    let statusBackground = 'bg-surface';
+    if (done) {
+        statusBackground = 'bg-success-surface';
     }
 
     return (
@@ -147,19 +150,14 @@ function RoutineLogItem({ medication, isLast }) {
                     {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
                 </p>
             </div>
-            <button
-                type='button'
-                onClick={handleToggle}
-                className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${buttonBackground}`}
-                aria-pressed={logged}
-                aria-label={logged ? 'Drops logged' : 'Log drops'}
-                >
-                    {logged ? (
-                        <span className="text-success text-label-md">Done</span>
-                    ) : (
-                        <span className="border border-border-subtle rounded-full h-8 w-8" />
-                    )}
-                </button>
+            {/* 'log a dose' to come once a route is built */}
+            <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
+            aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
+            >
+                <span className="text-label-md text-ink">
+                    {medication.logged_count}/{medication.frequency_per_day}
+                </span>
+            </div>
         </div>
     );
 }
