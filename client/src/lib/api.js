@@ -28,6 +28,16 @@ export async function loginUser({ email, password }) {
     return res.json();
 }
 
+export async function logoutUser() {
+    const res = await fetch(`${BASE_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+    });
+    if (!res.ok) {
+        throw new Error('Failed to log out.');
+    }
+}
+
 export async function getCurrentUser() {
     const res = await fetch(`${BASE_URL}/me`, {
         credentials: 'include', //redundant, future requirement when vite proxy isn't used to maintain user sessions with cookie-parser

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser, loginUser } from "#lib/api";
+import { getCurrentUser, loginUser, logoutUser } from "#lib/api";
 
 const AuthContext = createContext(null);
 
@@ -21,10 +21,9 @@ export function AuthProvider({ children }) {
     }
 
     function logout() {
-        //no logout route yet
-        //clears local state
-        //page refresh will re-hydrate 'user' w/getCurrentUser()
-        setUser(null);
+        return logoutUser()
+        .then(() => setUser(null))
+        .catch(() => setUser(null));
     }
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
