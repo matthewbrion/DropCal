@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMyProtocol, getTodaysDoseSummary } from "../lib/patientProtocols";
+import { frequencyText, eyeLabel } from "../lib/medicationFormatting";
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -19,24 +20,29 @@ function getCurrentWeekNumber(startDate, totalWeeks) {
     return currentWeek;
 }
 
-function frequencyText(count) {
-    if (count === 1) {
-        return '1 time a day';
+function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+        return 'Good morning';
     }
-    return `${count} times a day`;
+    if (hour < 17) {
+        return 'Good afternoon';
+    }
+    return 'Good evening';
 }
 
-function eyeLabel(eye) {
-    if (eye === 'both') {
-        return 'Both eyes';
+function firstName(fullName) {
+    return fullName.split(' ')[0];
+}
+
+function doseSummary(medications) {
+    let loggedCount = 0;
+    let totalCount = 0;
+    for (const medication of medications) {
+        loggedCount += medication.logged_count;
+        totalCount += medication.frequency_per_day;
     }
-    if (eye === 'left') {
-        return 'Left eye';
-    }
-    if (eye === 'right') {
-        return 'Right eye';
-    }
-    return eye;
+    return { loggedCount, totalCount };
 }
 
 export default function Home() {
@@ -96,6 +102,7 @@ export default function Home() {
 
     const currentWeekNumber = getCurrentWeekNumber(protocol.start_date, protocol.weeks.length);
     const ended = currentWeekNumber === null;
+    const summary = ended ? null : doseSummary(today.medications);
 
     return (
         <div className="min-h-screen bg-surface px-gutter-mobile md:px-gutter-desktop py-section-gap">
