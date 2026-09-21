@@ -3,10 +3,10 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
-import Profile from '#pages/Profile';
-import Protocols from '#pages/Protocols';
-import Medications from '#pages/Medications';
-import Physician from '#pages/Physician';
+import Profile from './pages/Profile';
+import Protocols from './pages/Protocols';
+import Medications from './pages/Medications';
+import Physician from './pages/Physician';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/AppLayout';
 
