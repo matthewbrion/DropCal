@@ -178,8 +178,10 @@ function RoutineLogItem({ medication, isLast }) {
     }
 
     let statusBackground = 'bg-surface';
+    let statusText = 'text-ink';
     if (done) {
-        statusBackground = 'bg-success-surface';
+        statusBackground = 'bg-success';
+        statusText = 'text-on-success';
     }
 
     return (
@@ -194,7 +196,7 @@ function RoutineLogItem({ medication, isLast }) {
             <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
                 aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
             >
-                <span className="text-label-md text-ink">
+                <span className={`text-label-md ${statusText}`}>
                     {medication.logged_count}/{medication.frequency_per_day}
                 </span>
             </div>

@@ -33,7 +33,7 @@ function Register() {
                         <input
                             type='text'
                             required
-                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
+                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-control focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
                             value={name}
                             onChange={(n) => setName(n.target.value)}
                         />
@@ -44,7 +44,7 @@ function Register() {
                         <input
                             type='email'
                             required
-                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
+                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-control focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
                             value={email}
                             onChange={(n) => setEmail(n.target.value)}
                         />
@@ -54,7 +54,7 @@ function Register() {
                         <input
                             type='password'
                             required
-                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
+                            className="mt-1 px-3.5 h-[52px] text-sm text-ink rounded-[10px] bg-surface-card w-full outline outline-1 -outline-offset-1 outline-border-control focus:outline-2 focus:-outline-offset-2 focus:outline-primary"
                             value={password}
                             onChange={(n) => setPassword(n.target.value)}
                         />
