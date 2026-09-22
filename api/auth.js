@@ -45,6 +45,14 @@ router.post('/login', async (req, res) => {
     }
 })
 
+router.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+    }).status(200).send('Logged out');
+})
+
 router.get('/me', getUserFromToken, async (req, res) => {
     const user = await getUserById(req.user.id);
     if (!user) return res.status(404).send('User not found')
