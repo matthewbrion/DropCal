@@ -67,9 +67,9 @@ export default function Home() {
             return;
         }
         getTodaysDoseSummary()
-        .then(setToday)
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+            .then(setToday)
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
     }, [auth.loading]);
 
     if (auth.loading || loading) {
@@ -107,12 +107,21 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-surface px-gutter-mobile md:px-gutter-desktop py-section-gap">
             <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
-                <header className="mb-flow-gap">
-                    <h1 className="text-headline-lg text-ink">{protocol.protocol_name}</h1>
+                <header className="mb-flow-gap rounded-xl bg-primary p-card-padding text-on-primary">
+                    <h1 className="text-headline-lg">{getGreeting()}, {firstName(auth.user.name)}</h1>
+                    <p className="text-body-md mt-1">{protocol.protocol_name}</p>
                     {!ended && (
-                        <p className="text-body-md text-ink-muted mt-1">
-                            Week {currentWeekNumber} of {protocol.weeks.length}
-                        </p>
+                        <>
+                            <p className="text-body-md">
+                                Week {currentWeekNumber} of {protocol.weeks.length}
+                            </p>
+                            <div className="mt-flow-gap flex flex-col gap-3">
+                                <DoseDrops loggedCount={summary.loggedCount} totalCount={summary.totalCount} />
+                                <p className="text-body-lg">
+                                    {summary.loggedCount} of {summary.totalCount} doses logged today
+                                </p>
+                            </div>
+                        </>
                     )}
                 </header>
 
@@ -132,6 +141,27 @@ export default function Home() {
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+// one drop per dose due today: solid after log, outlined until then
+function DoseDrops({ loggedCount, totalCount }) {
+    const drops = [];
+    for (let i = 0; i < totalCount; i++) {
+        drops.push(i < loggedCount);
+    }
+    return (
+        <div className="flex flex-wrap gap-2" aria-hidden="true">
+            {drops.map((logged, i) => (
+                <svg key={i} viewBox="0 0 24 39.1" className="h-8 w-5 overflow-visible">
+                    <path
+                        d="M12 0C17.04 11.38 24 16.26 24 27.1A12 12 0 0 1 0 27.1C0 16.26 6.96 11.38 12 0Z"
+                        strokeWidth="2"
+                        className={logged ? 'fill-on-primary stroke-on-primary' : 'fill-none stroke-on-primary'}
+                    />
+                </svg>
+            ))}
         </div>
     );
 }
@@ -159,7 +189,7 @@ function RoutineLogItem({ medication, isLast }) {
             </div>
             {/* 'log a dose' to come once a route is built */}
             <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
-            aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
+                aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
             >
                 <span className="text-label-md text-ink">
                     {medication.logged_count}/{medication.frequency_per_day}
