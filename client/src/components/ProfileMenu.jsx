@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 function getInitials(name) {
     const parts = name.trim().split(' ');
-    if (parts.legnth === 1) {
+    if (parts.length === 1) {
         return parts[0].charAt(0).toUpperCase();
     }
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();

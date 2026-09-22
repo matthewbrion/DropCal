@@ -1,8 +1,18 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('/fonts/AtkinsonHyperlegibleNext-Variable.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* theme derived from Google Stitch first draft https://stitch.withgoogle.com/projects/3591377135045226907 */
 
 @theme {
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+
   --color-surface: #F8FAFC;
   --color-surface-card: #FFFFFF;
   --color-border-subtle: #E2E8F0;
@@ -53,4 +63,36 @@
   --spacing-card-padding: 1.75rem;
   --spacing-section-gap: 2.5rem;
   --spacing-flow-gap: 1rem;
+}
+
+/* dark theme: same token names, values re-picked so every text pair stays at 4.5:1 or better.
+   applied by ThemeContext / the inline script in index.html via data-theme on <html> */
+:root {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-surface: #0F172A;
+  --color-surface-card: #1E293B;
+  --color-border-subtle: #3B4A61;
+
+  --color-ink: #F1F5F9;
+  --color-ink-muted: #A3B1C6;
+
+  --color-primary: #5CB8D6;
+  --color-primary-active: #8FD0E6;
+  --color-primary-surface: #12303C;
+  --color-on-primary: #08303F;
+
+  --color-success: #7FC395;
+  --color-success-surface: #183426;
+  --color-error: #F2988C;
+  --color-error-surface: #3B1E1B;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
 }
