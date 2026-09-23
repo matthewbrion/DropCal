@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getPatientProtocolByPatientId } from "#db/queries/patientProtocols";
-import { getTodaysDoseSummary } from "#db/queries/doseLogs";
+import { getTodaysDoseSummary, logDose,undoLastDose } from "#db/queries/doseLogs";
 import getUserFromToken from "#middleware/getUserFromToken";
 
 const router = Router();
@@ -91,6 +91,62 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
         }));
 
         res.status(200).json({ has_protocol: true, ended: false, medications });
+    } catch (e) {
+        res.status(500).send('Something went wrong');
+    }
+});
+
+router.post('/me/doses', getUserFromToken, async (req, res) => {
+    try {
+        const { protocol_week_id } = req.body;
+
+        if (!protocol_week_id) {
+            return res.status(400).send('protocol_week_id is required');
+        }
+
+        const protocolRows = await getPatientProtocolByPatientId(req.user.id);
+
+        if (protocolRows.length === 0) {
+            return res.status(409).send('You do not have a routine yet');
+        }
+
+        const totalWeeks = new Set(protocolRows.map((row) => row.week_number)).size;
+        const currentWeekNumber = getCurrentWeekNumber(protocolRows[0].start_date, totalWeeks);
+
+        if (currentWeekNumber === null) {
+            return res.status(409).send('Your care plan has ended');
+        }
+
+        const dose = await logDose(req.user.id, protocol_week_id, currentWeekNumber, getServerTodayDateString());
+
+        if (!dose) {
+            return res.status(409).send('No doses left to log today');
+        }
+
+        res.status(201).json(dose);
+    } catch (e) {
+        if (e.code === '23505') {
+            return res.status(409).send('That dose was already logged');
+        }
+        res.status(500).send('Something went wrong');
+    }
+});
+
+router.delete('/me/doses', getUserFromToken, async (req, res) => {
+    try {
+        const { protocol_week_id } = req.body;
+
+        if (!protocol_week_id) {
+            return res.status(400).send('protocol_week_id is required');
+        }
+
+        const dose = await undoLastDose(req.user.id, protocol_week_id, getServerTodayDateString());
+
+        if (!dose) {
+            return res.status(409).send('There is no dose to undo');
+        }
+
+        res.status(200).json(dose);
     } catch (e) {
         res.status(500).send('Something went wrong');
     }
