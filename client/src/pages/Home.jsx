@@ -49,7 +49,8 @@ export default function Home() {
     const auth = useAuth();
     const [protocol, setProtocol] = useState(null);
     const [today, setToday] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [protocolLoading, setProtocolLoading] = useState(true);
+    const [todayLoading, setTodayLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -59,7 +60,7 @@ export default function Home() {
         getMyProtocol()
             .then(setProtocol)
             .catch((e) => setError(e.message))
-            .finally(() => setLoading(false));
+            .finally(() => setProtocolLoading(false));
     }, [auth.loading]);
 
     useEffect(() => {
@@ -69,10 +70,10 @@ export default function Home() {
         getTodaysDoseSummary()
             .then(setToday)
             .catch((e) => setError(e.message))
-            .finally(() => setLoading(false));
+            .finally(() => setTodayLoading(false));
     }, [auth.loading]);
 
-    if (auth.loading || loading) {
+    if (auth.loading || protocolLoading || todayLoading) {
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center">
                 <p className="text-body-lg text-ink-muted">Loading your routine...</p>
