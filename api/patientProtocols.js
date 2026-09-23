@@ -85,7 +85,9 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
             form: row.medication_form,
             eye: row.eye,
             frequency_per_day: row.frequency_per_day,
-            logged_count: Number(row.logged_count), 
+            logged_count: Number(row.logged_count),
+            protocol_week_id: row.protocol_week_id,
+            last_taken_at: row.last_taken_at
         }));
 
         res.status(200).json({ has_protocol: true, ended: false, medications });
