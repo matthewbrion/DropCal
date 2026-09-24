@@ -17,3 +17,8 @@ export function eyeLabel(eye) {
     }
     return eye;
 }
+
+export function timeText(value) {
+    const date = new Date(value);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}

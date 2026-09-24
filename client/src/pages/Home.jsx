@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getMyProtocol, getTodaysDoseSummary } from "../lib/patientProtocols";
-import { frequencyText, eyeLabel } from "../lib/medicationFormatting";
+import { getMyProtocol, getTodaysDoseSummary, logDose, undoLastDose } from "../lib/patientProtocols";
+import { frequencyText, eyeLabel, timeText } from "../lib/medicationFormatting";
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -73,6 +73,10 @@ export default function Home() {
             .finally(() => setTodayLoading(false));
     }, [auth.loading]);
 
+    function refreshToday() {
+        return getTodaysDoseSummary().then(setToday);
+    }
+
     if (auth.loading || protocolLoading || todayLoading) {
         return (
             <div className="flex items-center justify-center py-section-gap">
@@ -131,24 +135,23 @@ export default function Home() {
                         Your care plan has ended.  Reach out to your doctor with any questions.
                     </p>
                 ) : (
-                    <>
-                        <div className="bg-surface-card rounded-md">
-                            {today.medications.map((med, i) => (
-                                <RoutineLogItem
-                                    key={`${med.medication_id}-${med.eye}`}
-                                    medication={med}
-                                    isLast={i === today.medications.length - 1}
-                                />
-                            ))}
-                        </div>
-                    </>
+                    <div className="bg-surface-card rounded-md">
+                        {today.medications.map((med, i) => (
+                            <RoutineLogItem
+                                key={med.protocol_week_id}
+                                medication={med}
+                                isLast={i === today.medications.length - 1}
+                                onChange={refreshToday}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
     );
 }
 
-// one drop per dose due today: solid once logged, outline while still to take
+// one drop per dose due today: solid after log, outlined until then
 function DoseDrops({ loggedCount, totalCount }) {
     const drops = [];
     for (let i = 0; i < totalCount; i++) {
@@ -169,7 +172,10 @@ function DoseDrops({ loggedCount, totalCount }) {
     );
 }
 
-function RoutineLogItem({ medication, isLast }) {
+function RoutineLogItem({ medication, isLast, onChange }) {
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState(null);
+
     const done = medication.logged_count >= medication.frequency_per_day;
 
     let borderClass = 'border-b border-border-subtle';
@@ -184,22 +190,81 @@ function RoutineLogItem({ medication, isLast }) {
         statusText = 'text-on-success';
     }
 
+    let buttonClass = 'bg-primary text-on-primary';
+    if (done) {
+        buttonClass = 'bg-success-surface text-success';
+    }
+
+    async function handleLog() {
+        setSaving(true);
+        setMessage(null);
+        try {
+            await logDose(medication.protocol_week_id);
+            await onChange();
+        } catch (e) {
+            setMessage(e.message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function handleUndo() {
+        setSaving(true);
+        setMessage(null);
+        try {
+            await undoLastDose(medication.protocol_week_id);
+            await onChange();
+        } catch (e) {
+            setMessage(e.message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
     return (
-        <div className={`flex items-center justify-between py-card-padding px-card-padding ${borderClass}`}>
-            <div>
-                <p className="text-headline-md text-ink">{medication.name}</p>
-                <p className="text-body-md text-ink-muted">
-                    {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
-                </p>
+        <div className={`py-card-padding px-card-padding ${borderClass}`}>
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-headline-md text-ink">{medication.name}</p>
+                    <p className="text-body-md text-ink-muted">
+                        {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
+                    </p>
+                </div>
+                <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
+                    aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
+                >
+                    <span className={`text-label-md ${statusText}`}>
+                        {medication.logged_count}/{medication.frequency_per_day}
+                    </span>
+                </div>
             </div>
-            {/* 'log a dose' to come once a route is built */}
-            <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
-                aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
+
+            <button
+                type="button"
+                onClick={handleLog}
+                disabled={done || saving}
+                className={`mt-flow-gap w-full h-touch-target rounded-md text-label-lg font-semibold transition-colors ${buttonClass}`}
             >
-                <span className={`text-label-md ${statusText}`}>
-                    {medication.logged_count}/{medication.frequency_per_day}
-                </span>
-            </div>
+                {done ? 'Done for today!' : 'Took my drops'}
+            </button>
+
+            {message && (
+                <p role="alert" aria-live='polite' className="mt-2 text-body-md text-error">{message}</p>
+            )}
+
+            {!message && medication.last_taken_at && (
+                <p aria-live='polite' className="mt-2 text-body-md text-ink-muted">
+                    Last taken {timeText(medication.last_taken_at)} ·{' '}
+                    <button
+                        type="button"
+                        onClick={handleUndo}
+                        disabled={saving}
+                        className="text-primary font-medium underline px-1 py-2"
+                    >
+                        Undo
+                    </button>
+                </p>
+            )}
         </div>
     );
 }
