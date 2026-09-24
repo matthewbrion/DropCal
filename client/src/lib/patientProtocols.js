@@ -19,3 +19,29 @@ export async function getTodaysDoseSummary() {
     }
     return res.json();
 }
+
+export async function logDose(protocolWeekId) {
+    const res = await fetch(`${BASE_URL}/me/doses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ protocol_week_id: protocolWeekId }),
+    });
+    if (!res.ok) {
+        throw new Error("Couldn't save.  Please try again.");
+    }
+    return res.json();
+}
+
+export async function undoLastDose(protocolWeekId) {
+    const res = await fetch(`${BASE_URL}/me/doses`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ protocol_week_id: protocolWeekId }),
+    });
+    if (!res.ok) {
+        throw new Error("Couldn't undo.  Please try again.");
+    }
+    return res.json();
+}
