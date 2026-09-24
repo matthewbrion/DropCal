@@ -79,7 +79,7 @@ export default function Home() {
 
     if (auth.loading || protocolLoading || todayLoading) {
         return (
-            <div className="min-h-screen bg-surface flex items-center justify-center">
+            <div className="flex items-center justify-center py-section-gap">
                 <p className="text-body-lg text-ink-muted">Loading your routine...</p>
             </div>
         );
@@ -87,7 +87,7 @@ export default function Home() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-surface flex items-center justify-center px-gutter-mobile">
+            <div className="flex items-center justify-center px-gutter-mobile py-section-gap">
                 <p className="text-body-lg text-error">{error}</p>
             </div>
         );
@@ -97,7 +97,7 @@ export default function Home() {
 
     if (!hasProtocol) {
         return (
-            <div className="min-h-screen bg-surface flex items-center justify-center px-gutter-mobile">
+            <div className="flex items-center justify-center px-gutter-mobile py-section-gap">
                 <p className="text-body-lg text-ink-muted text-center">
                     Your doctor hasn't assigned a routine yet.
                 </p>
@@ -110,7 +110,7 @@ export default function Home() {
     const summary = ended ? null : doseSummary(today.medications);
 
     return (
-        <div className="min-h-screen bg-surface px-gutter-mobile md:px-gutter-desktop py-section-gap">
+        <div className="px-gutter-mobile md:px-gutter-desktop py-section-gap">
             <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
                 <header className="mb-flow-gap rounded-xl bg-primary p-card-padding text-on-primary">
                     <h1 className="text-headline-lg">{getGreeting()}, {firstName(auth.user.name)}</h1>
@@ -184,8 +184,10 @@ function RoutineLogItem({ medication, isLast, onChange }) {
     }
 
     let statusBackground = 'bg-surface';
+    let statusText = 'text-ink';
     if (done) {
-        statusBackground = 'bg-success-surface';
+        statusBackground = 'bg-success';
+        statusText = 'text-on-success';
     }
 
     let buttonClass = 'bg-primary text-on-primary';
@@ -231,7 +233,7 @@ function RoutineLogItem({ medication, isLast, onChange }) {
                 <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
                     aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}
                 >
-                    <span className="text-label-md text-ink">
+                    <span className={`text-label-md ${statusText}`}>
                         {medication.logged_count}/{medication.frequency_per_day}
                     </span>
                 </div>

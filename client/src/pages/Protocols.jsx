@@ -39,7 +39,7 @@ export default function Protocols() {
 
     if (!hasProtocol) {
         return (
-            <div className="flex item-center justify-center px-gutter-mobile py-section-gap">
+            <div className="flex items-center justify-center px-gutter-mobile py-section-gap">
                 <p className="text-body-lg text-ink-muted text-center">
                     Your doctor hasn't assigned a routine yet.
                 </p>
@@ -67,13 +67,13 @@ export default function Protocols() {
 function WeekCard({ week }) {
     return (
         <div className="bg-surface-card rounded-md">
-            <p className="text-headline-md text-ink px-card-oadding pt-card-padding">
+            <p className="text-headline-md text-ink px-card-padding pt-card-padding">
                 Week {week.week_number}
             </p>
             <div>
                 {week.medications.map((medication, i) => (
                     <MedicationRow
-                        key={medication.medication_id}
+                        key={`${medication.medication_id}-${medication.eye}`}
                         medication={medication}
                         isLast={i === week.medications.length - 1}
                     />
