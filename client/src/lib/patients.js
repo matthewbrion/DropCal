@@ -42,3 +42,13 @@ export async function assignProtocol(assignment) {
     }
     return res.json();
 }
+
+export async function getPatientHistory(patientId) {
+    const res = await fetch(`${BASE_URL}/${patientId}/history`, {
+        credentials: 'include',
+    });
+    if (!res.ok) {
+        throw new Error('Failed to fetch that patient\'s history.');
+    }
+    return res.json();
+}
