@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { getCurrentPatientProtocolId, getPatientProtocolById } from "#db/queries/patientProtocols";
+import { getCurrentPatientProtocolId, getPatientProtocolById, getActiveCourseForPatient, assignProtocol } from "#db/queries/patientProtocols";
 import { getTodaysDoseSummary, logDose, undoLastDose, getDoseHistory } from "#db/queries/doseLogs";
+import { getUserByEmail, getUserById } from "#db/queries/users";
 import getUserFromToken from "#middleware/getUserFromToken";
+import requireDoctor from "#middleware/requireDoctor";
 
 const router = Router();
 
@@ -47,6 +49,15 @@ function getServerTodayDateString() {
     return `${year}-${month}-${day}`;
 }
 
+//same shape as getServerTodayDateString, for a date that came back from the database
+function toDateString(value) {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
     const today = new Date();
@@ -73,8 +84,10 @@ async function getActiveProtocol(patientId) {
     const rows = await getPatientProtocolById(patientProtocolId);
     const totalWeeks = new Set(rows.map((row) => row.week_number)).size;
     const currentWeekNumber = getCurrentWeekNumber(rows[0].start_date, totalWeeks);
+    const startsOn = toDateString(rows[0].start_date);
+    const notStarted = startsOn > getServerTodayDateString();
 
-    return { patientProtocolId, rows, currentWeekNumber };
+    return { patientProtocolId, rows, currentWeekNumber, startsOn, notStarted };
 }
 
 router.get('/me/today', getUserFromToken, async (req, res) => {
@@ -89,7 +102,11 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
             return res.status(200).json({ has_protocol: true, ended: true, medications: [] });
         }
 
-        const rows = await getTodaysDoseSummary(active.patientProtocolId, active.currentWeekNumber, getServerTodayDateString());
+        //before the start date the patient sees week one, but nothing can be logged yet
+        const weekNumber = active.notStarted ? 1 : active.currentWeekNumber;
+        const logDate = active.notStarted ? active.startsOn : getServerTodayDateString();
+
+        const rows = await getTodaysDoseSummary(active.patientProtocolId, weekNumber, logDate);
 
         const medications = rows.map((row) => ({
             medication_id: row.medication_id,
@@ -102,7 +119,13 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
             last_taken_at: row.last_taken_at
         }));
 
-        res.status(200).json({ has_protocol: true, ended: false, medications });
+        res.status(200).json({
+            has_protocol: true,
+            ended: false,
+            not_started: active.notStarted,
+            starts_on: active.startsOn,
+            medications,
+        });
     } catch (e) {
         res.status(500).send('Something went wrong');
     }
@@ -124,6 +147,10 @@ router.post('/me/doses', getUserFromToken, async (req, res) => {
 
         if (active.currentWeekNumber === null) {
             return res.status(409).send('Your care plan has ended');
+        }
+
+        if (active.notStarted) {
+            return res.status(409).send('Your routine has not started yet');
         }
 
         const dose = await logDose(active.patientProtocolId, protocol_week_id, active.currentWeekNumber, getServerTodayDateString());
@@ -218,6 +245,55 @@ router.get('/me/history', getUserFromToken, async (req, res) => {
 
         res.status(200).json({ courses: [...coursesById.values()] });
     } catch (e) {
+        res.status(500).send('Something went wrong');
+    }
+});
+
+//a doctor assigns a stock protocol, either to someone already on their list (patient_id)
+//or to a new patient by email
+router.post('/', getUserFromToken, requireDoctor, async (req, res) => {
+    try {
+        const { patient_email, patient_id, protocol_id, start_date } = req.body;
+
+        if (!protocol_id) {
+            return res.status(400).send('protocol_id is required');
+        }
+
+        if (!start_date || !/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+            return res.status(400).send('start_date must be YYYY-MM-DD');
+        }
+
+        let patient = null;
+
+        if (patient_email) {
+            patient = await getUserByEmail(patient_email);
+        } else if (patient_id) {
+            patient = await getUserById(patient_id);
+        } else {
+            return res.status(400).send('patient_email or patient_id is required');
+        }
+
+        if (!patient) {
+            return res.status(404).send('No account with that email');
+        }
+
+        if (patient.role !== 'patient') {
+            return res.status(400).send('That account is not a patient');
+        }
+
+        const active = await getActiveCourseForPatient(patient.id);
+
+        if (active) {
+            return res.status(409).send('That patient already has a routine in progress');
+        }
+
+        const assignment = await assignProtocol(patient.id, req.user.id, protocol_id, start_date);
+
+        res.status(201).json(assignment);
+    } catch (e) {
+        if (e.code === '23503') {
+            return res.status(400).send('That protocol does not exist');
+        }
         res.status(500).send('Something went wrong');
     }
 });

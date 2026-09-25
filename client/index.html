@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DropCal</title>
     <script>
-      // set the theme before React loads so a dark-mode user never sees a white flash
+      // set the theme before React loads
       (function () {
         var saved = localStorage.getItem('theme');
         var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);

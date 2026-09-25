@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMyProtocol, getTodaysDoseSummary, logDose, undoLastDose } from "../lib/patientProtocols";
-import { frequencyText, eyeLabel, timeText } from "../lib/medicationFormatting";
+import { frequencyText, eyeLabel, timeText, dateText } from "../lib/medicationFormatting";
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -108,6 +108,7 @@ export default function Home() {
     const currentWeekNumber = getCurrentWeekNumber(protocol.start_date, protocol.weeks.length);
     const ended = currentWeekNumber === null;
     const summary = ended ? null : doseSummary(today.medications);
+    const notStarted = today.not_started === true;
 
     return (
         <div className="px-gutter-mobile md:px-gutter-desktop py-section-gap">
@@ -118,12 +119,14 @@ export default function Home() {
                     {!ended && (
                         <>
                             <p className="text-body-md">
-                                Week {currentWeekNumber} of {protocol.weeks.length}
+                                {notStarted ? 'Starting soon' : `Week ${currentWeekNumber} of ${protocol.weeks.length}`}
                             </p>
                             <div className="mt-flow-gap flex flex-col gap-3">
                                 <DoseDrops loggedCount={summary.loggedCount} totalCount={summary.totalCount} />
                                 <p className="text-body-lg">
-                                    {summary.loggedCount} of {summary.totalCount} doses logged today
+                                    {notStarted
+                                        ? `Your routine starts ${dateText(today.starts_on)}`
+                                        : `${summary.loggedCount} of ${summary.totalCount} doses logged today`}
                                 </p>
                             </div>
                         </>
@@ -141,6 +144,8 @@ export default function Home() {
                                 key={med.protocol_week_id}
                                 medication={med}
                                 isLast={i === today.medications.length - 1}
+                                notStarted={notStarted}
+                                startsOn={today.starts_on}
                                 onChange={refreshToday}
                             />
                         ))}
@@ -172,7 +177,7 @@ function DoseDrops({ loggedCount, totalCount }) {
     );
 }
 
-function RoutineLogItem({ medication, isLast, onChange }) {
+function RoutineLogItem({ medication, isLast, notStarted, startsOn, onChange }) {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
 
@@ -191,8 +196,15 @@ function RoutineLogItem({ medication, isLast, onChange }) {
     }
 
     let buttonClass = 'bg-primary text-on-primary';
-    if (done) {
+    if (done || notStarted) {
         buttonClass = 'bg-success-surface text-success';
+    }
+
+    let buttonLabel = 'Took my drops';
+    if (notStarted) {
+        buttonLabel = `Starts ${dateText(startsOn)}`;
+    } else if (done) {
+        buttonLabel = 'Done for today!';
     }
 
     async function handleLog() {
@@ -242,10 +254,10 @@ function RoutineLogItem({ medication, isLast, onChange }) {
             <button
                 type="button"
                 onClick={handleLog}
-                disabled={done || saving}
+                disabled={done || saving || notStarted}
                 className={`mt-flow-gap w-full h-touch-target rounded-md text-label-lg font-semibold transition-colors ${buttonClass}`}
             >
-                {done ? 'Done for today!' : 'Took my drops'}
+                {buttonLabel}
             </button>
 
             {message && (

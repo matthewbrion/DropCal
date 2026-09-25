@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getPatient } from '../lib/patients';
 import { dateText } from '../lib/medicationFormatting';
+import AssignProtocolForm from '../components/AssignProtocolForm';
 
 export default function PatientProfile() {
     const auth = useAuth();
@@ -20,6 +21,10 @@ export default function PatientProfile() {
             .catch((e) => setError(e.message))
             .finally(() => setLoading(false));
     }, [auth.loading, patientId]);
+
+    function refreshPatient() {
+        return getPatient(patientId).then(setPatient);
+    }
 
     if (auth.loading || loading) {
         return (
@@ -69,6 +74,14 @@ export default function PatientProfile() {
                             {patient.logged_today} of {patient.expected_today} doses logged
                         </p>
                     </div>
+                )}
+
+                {patient.is_active ? (
+                    <p className="text-body-md text-ink-muted">
+                        You can assign a new routine once this one has finished.
+                    </p>
+                ) : (
+                    <AssignProtocolForm patientId={patient.patient_id} onAssigned={refreshPatient} />
                 )}
             </div>
         </div>

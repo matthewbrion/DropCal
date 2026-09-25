@@ -39,3 +39,31 @@ export async function getPatientProtocolById(patientProtocolId) {
     const { rows } = await db.query(sql, [patientProtocolId]);
     return rows;
 }
+
+
+//any course that has not run out of weeks yet, including one starting in the future
+export async function getActiveCourseForPatient(patientId) {
+    const sql = `
+    SELECT pp.id
+    FROM patient_protocols pp
+    JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
+    WHERE pp.patient_id = $1
+    GROUP BY pp.id, pp.start_date
+    HAVING pp.start_date + (COUNT(DISTINCT pw.week_number) * 7)::int > CURRENT_DATE
+    LIMIT 1
+    `;
+    const { rows } = await db.query(sql, [patientId]);
+    return rows[0] ?? null;
+}
+
+export async function assignProtocol(patientId, doctorId, protocolId, startDate) {
+    const sql = `
+    INSERT INTO patient_protocols
+        (patient_id, doctor_id, protocol_id, start_date)
+    VALUES
+        ($1, $2, $3, $4)
+    RETURNING id, patient_id, doctor_id, protocol_id, to_char(start_date, 'YYYY-MM-DD') AS start_date
+    `;
+    const { rows } = await db.query(sql, [patientId, doctorId, protocolId, startDate]);
+    return rows[0];
+}
