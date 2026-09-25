@@ -1,0 +1,30 @@
+const BASE_URL = '/api/patients';
+
+export async function getMyPatients() {
+    const res = await fetch(BASE_URL, {
+        credentials: 'include',
+    });
+    if (res.status === 403) {
+        throw new Error('This page is for physicians.');
+    }
+    if (!res.ok) {
+        throw new Error('Failed to fetch your patients.');
+    }
+    return res.json();
+}
+
+export async function getPatient(patientId) {
+    const res = await fetch(`${BASE_URL}/${patientId}`, {
+        credentials: 'include',
+    });
+    if (res.status === 403) {
+        throw new Error('This page is for physicians.');
+    }
+    if (res.status === 404) {
+        throw new Error('That patient is not on your list.');
+    }
+    if (!res.ok) {
+        throw new Error('Failed to fetch that patient.');
+    }
+    return res.json();
+}

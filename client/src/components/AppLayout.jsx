@@ -1,13 +1,24 @@
 import { NavLink, Outlet } from "react-router-dom";
 import ProfileMenu from "./ProfileMenu";
 import Logo from "./Logo";
+import { useAuth } from "../context/AuthContext";
 
-const navLinks = [
+const patientLinks = [
     { to: '/', label: 'Home', end: true },
     { to: '/protocols', label: 'Protocols' },
     { to: '/medications', label: 'Medications' },
-    { to: '/physician', label: 'Physician' },
 ];
+
+const doctorLinks = [
+    { to: '/physician', label: 'My Patients', end: true },
+];
+
+function linksForRole(role) {
+    if (role === 'doctor') {
+        return doctorLinks;
+    }
+    return patientLinks;
+}
 
 function navLinkClassName({ isActive }) {
      let classes = 'whitespace-nowrap rounded-md px-4 py-2 text-label-md text-ink-muted';
@@ -18,6 +29,9 @@ function navLinkClassName({ isActive }) {
 }
 
 export default function AppLayout() {
+    const auth = useAuth();
+    const navLinks = linksForRole(auth.user?.role);
+
     return (
         <div className="min-h-screen flex flex-col bg-surface">
             <header className="flex items-center justify-between border-b border-border-subtle bg-surface-card px-gutter-mobile py-4 md:px-gutter-desktop">
