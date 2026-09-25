@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from "../lib/api";
+import Logo from "../components/Logo";
 
 function Register() {
     const [name, setName] = useState('');
@@ -23,6 +24,10 @@ function Register() {
     return (
         <div className="min-h-screen bg-surface flex items-center justify-center px-5">
             <div className="w-full max-w-sm">
+                <div className="flex flex-col items-center gap-2.5 mb-section-gap">
+                    <Logo className="h-14 w-14" />
+                    <span className="text-headline-lg font-bold text-ink">Drop<span className="text-primary">Cal</span></span>
+                </div>
                 <h1 className="text-[26px] leading-[34px] tracking-[-0.01em] font-semibold text-ink mb-6 text-center">
                     Create an account
                     </h1>

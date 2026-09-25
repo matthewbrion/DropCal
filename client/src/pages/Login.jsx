@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -28,6 +29,10 @@ function Login() {
     return (
         <div className='min-h-screen bg-surface flex items-center justify-center px-5'>
             <div className='w-full max-w-sm'>
+                <div className='flex flex-col items-center gap-2.5 mb-section-gap'>
+                    <Logo className='h-14 w-14' />
+                    <span className='text-headline-lg font-bold text-ink'>Drop<span className='text-primary'>Cal</span></span>
+                </div>
                 <h1 className='text-[26px] leading-[34px] tracking-[-0.01em] font-semibold text-ink mb-6 text-center'>
                     Log In
                 </h1>
