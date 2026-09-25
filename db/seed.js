@@ -13,6 +13,8 @@ async function seedDoseLogs(patientProtocolId, protocolId, startDate, totalWeeks
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const logs = [];
+
     for (let dayOffset = 0; dayOffset < totalWeeks * 7; dayOffset++) {
         const day = new Date(startDate);
         day.setDate(day.getDate() + dayOffset);
@@ -41,16 +43,31 @@ async function seedDoseLogs(patientProtocolId, protocolId, startDate, totalWeeks
 
             for (let doseIndex = 1; doseIndex <= doses; doseIndex++) {
                 const hour = String(7 + doseIndex * 2).padStart(2, '0');
-                await db.query(
-                    `INSERT INTO dose_logs
-                    (patient_protocol_id, protocol_week_id, log_date, dose_index, checked_at)
-                VALUES
-                    ($1, $2, $3, $4, $5)`,
-                    [patientProtocolId, week.id, logDate, doseIndex, `${logDate} ${hour}:00:00`]
-                );
+                logs.push([patientProtocolId, week.id, logDate, doseIndex, `${logDate} ${hour}:00:00`]);
             }
         }
     }
+
+    if (logs.length === 0) {
+        return;
+    }
+
+    //one insert for the whole course instead of one per dose
+    const placeholders = [];
+    const params = [];
+    for (const log of logs) {
+        const n = params.length;
+        placeholders.push(`($${n + 1}, $${n + 2}, $${n + 3}, $${n + 4}, $${n + 5})`);
+        params.push(...log);
+    }
+
+    await db.query(
+        `INSERT INTO dose_logs
+        (patient_protocol_id, protocol_week_id, log_date, dose_index, checked_at)
+    VALUES
+        ${placeholders.join(',\n        ')}`,
+        params
+    );
 }
 
 async function seed() {
