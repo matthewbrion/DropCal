@@ -2,6 +2,74 @@ import db from '#db/client';
 import bcrypt from 'bcrypt';
 import { createUser } from '#db/queries/users';
 
+async function seedDoseLogs(patientProtocolId, protocolId, startDate, totalWeeks) {
+    const { rows: weeks } = await db.query(
+        `SELECT id, week_number, frequency_per_day
+        FROM protocol_weeks
+        WHERE protocol_id = $1`,
+        [protocolId]
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const logs = [];
+
+    for (let dayOffset = 0; dayOffset < totalWeeks * 7; dayOffset++) {
+        const day = new Date(startDate);
+        day.setDate(day.getDate() + dayOffset);
+
+        if (day >= today) {
+            break; //leave today unlogged so doses can be logged in a demo
+        }
+
+        if (dayOffset === 11) {
+            continue; //one day missed completely
+        }
+
+        const shortDay = dayOffset % 9 === 4; //every ninth day is one dose short
+        const weekNumber = Math.floor(dayOffset / 7) + 1;
+        const logDate = day.toISOString().slice(0, 10);
+
+        for (const week of weeks) {
+            if (week.week_number !== weekNumber) {
+                continue;
+            }
+
+            let doses = week.frequency_per_day;
+            if (shortDay) {
+                doses = doses - 1;
+            }
+
+            for (let doseIndex = 1; doseIndex <= doses; doseIndex++) {
+                const hour = String(7 + doseIndex * 2).padStart(2, '0');
+                logs.push([patientProtocolId, week.id, logDate, doseIndex, `${logDate} ${hour}:00:00`]);
+            }
+        }
+    }
+
+    if (logs.length === 0) {
+        return;
+    }
+
+    //one insert for the whole course instead of one per dose
+    const placeholders = [];
+    const params = [];
+    for (const log of logs) {
+        const n = params.length;
+        placeholders.push(`($${n + 1}, $${n + 2}, $${n + 3}, $${n + 4}, $${n + 5})`);
+        params.push(...log);
+    }
+
+    await db.query(
+        `INSERT INTO dose_logs
+        (patient_protocol_id, protocol_week_id, log_date, dose_index, checked_at)
+    VALUES
+        ${placeholders.join(',\n        ')}`,
+        params
+    );
+}
+
 async function seed() {
     try {
         await db.query(`TRUNCATE users, medications, protocols, protocol_weeks, patient_protocols RESTART IDENTITY CASCADE`);
@@ -79,24 +147,41 @@ async function seed() {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 16);
 
-        await db.query(
+        const { rows: [vanceCataract] } = await db.query(
             `INSERT INTO patient_protocols
             (patient_id, doctor_id, protocol_id, start_date)
         VALUES
-            ($1, $2, $3, $4)`,
+            ($1, $2, $3, $4)
+            RETURNING id`,
             [patient.id, doctor.id, protocol.id, startDate.toISOString().slice(0, 10)]
         );
 
         const ulcerStartDate = new Date();
         ulcerStartDate.setDate(ulcerStartDate.getDate() - 9);
 
-        await db.query(
+        const { rows: [chenUlcer] } = await db.query(
             `INSERT INTO patient_protocols
             (patient_id, doctor_id, protocol_id, start_date)
         VALUES
-            ($1, $2, $3, $4)`,
+            ($1, $2, $3, $4)
+            RETURNING id`,
             [patient2.id, doctor.id, ulcerProtocol.id, ulcerStartDate.toISOString().slice(0, 10)]
         );
+
+                const vanceUlcerStart = new Date();
+        vanceUlcerStart.setDate(vanceUlcerStart.getDate() - 70);
+
+        const { rows: [vanceUlcer] } = await db.query(
+            `INSERT INTO patient_protocols
+            (patient_id, doctor_id, protocol_id, start_date)
+        VALUES
+            ($1, $2, $3, $4)
+        RETURNING id`,
+            [patient.id, doctor.id, ulcerProtocol.id, vanceUlcerStart.toISOString().slice(0, 10)]
+        );
+
+        await seedDoseLogs(vanceUlcer.id, ulcerProtocol.id, vanceUlcerStart, 2);
+        await seedDoseLogs(vanceCataract.id, protocol.id, startDate, 4);
 
         console.log("🌱 Database seeded.");
     } catch (err) {

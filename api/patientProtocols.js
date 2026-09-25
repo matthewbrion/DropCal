@@ -1,17 +1,18 @@
 import { Router } from "express";
-import { getPatientProtocolByPatientId } from "#db/queries/patientProtocols";
-import { getTodaysDoseSummary, logDose,undoLastDose } from "#db/queries/doseLogs";
+import { getCurrentPatientProtocolId, getPatientProtocolById } from "#db/queries/patientProtocols";
+import { getTodaysDoseSummary, logDose, undoLastDose, getDoseHistory } from "#db/queries/doseLogs";
 import getUserFromToken from "#middleware/getUserFromToken";
 
 const router = Router();
 
 router.get('/me', getUserFromToken, async (req, res) => {
     try {
-        const rows = await getPatientProtocolByPatientId(req.user.id);
+        const active = await getActiveProtocol(req.user.id);
+        const rows = active ? active.rows : [];
 
         const weeksByNumber = new Map();
         for (const row of rows) {
-            if(!weeksByNumber.has(row.week_number)) {
+            if (!weeksByNumber.has(row.week_number)) {
                 weeksByNumber.set(row.week_number, {
                     week_number: row.week_number,
                     medications: [],
@@ -60,24 +61,35 @@ function getCurrentWeekNumber(startDate, totalWeeks) {
         return 1;
     }
     return currentWeek;
- }
+}
+
+async function getActiveProtocol(patientId) {
+    const patientProtocolId = await getCurrentPatientProtocolId(patientId);
+
+    if (!patientProtocolId) {
+        return null;
+    }
+
+    const rows = await getPatientProtocolById(patientProtocolId);
+    const totalWeeks = new Set(rows.map((row) => row.week_number)).size;
+    const currentWeekNumber = getCurrentWeekNumber(rows[0].start_date, totalWeeks);
+
+    return { patientProtocolId, rows, currentWeekNumber };
+}
 
 router.get('/me/today', getUserFromToken, async (req, res) => {
     try {
-        const protocolRows = await getPatientProtocolByPatientId(req.user.id);
+        const active = await getActiveProtocol(req.user.id);
 
-        if (protocolRows.length === 0) {
+        if (!active) {
             return res.status(200).json({ has_protocol: false, ended: false, medications: [] });
         }
 
-        const totalWweeks = new Set(protocolRows.map((row) => row.week_number)).size;
-        const currentWeekNumber = getCurrentWeekNumber(protocolRows[0].start_date, totalWweeks);
-
-        if (currentWeekNumber === null) {
+        if (active.currentWeekNumber === null) {
             return res.status(200).json({ has_protocol: true, ended: true, medications: [] });
         }
 
-        const rows = await getTodaysDoseSummary(req.user.id, currentWeekNumber, getServerTodayDateString());
+        const rows = await getTodaysDoseSummary(active.patientProtocolId, active.currentWeekNumber, getServerTodayDateString());
 
         const medications = rows.map((row) => ({
             medication_id: row.medication_id,
@@ -104,20 +116,17 @@ router.post('/me/doses', getUserFromToken, async (req, res) => {
             return res.status(400).send('protocol_week_id is required');
         }
 
-        const protocolRows = await getPatientProtocolByPatientId(req.user.id);
+        const active = await getActiveProtocol(req.user.id);
 
-        if (protocolRows.length === 0) {
+        if (!active) {
             return res.status(409).send('You do not have a routine yet');
         }
 
-        const totalWeeks = new Set(protocolRows.map((row) => row.week_number)).size;
-        const currentWeekNumber = getCurrentWeekNumber(protocolRows[0].start_date, totalWeeks);
-
-        if (currentWeekNumber === null) {
+        if (active.currentWeekNumber === null) {
             return res.status(409).send('Your care plan has ended');
         }
 
-        const dose = await logDose(req.user.id, protocol_week_id, currentWeekNumber, getServerTodayDateString());
+        const dose = await logDose(active.patientProtocolId, protocol_week_id, active.currentWeekNumber, getServerTodayDateString());
 
         if (!dose) {
             return res.status(409).send('No doses left to log today');
@@ -140,13 +149,74 @@ router.delete('/me/doses', getUserFromToken, async (req, res) => {
             return res.status(400).send('protocol_week_id is required');
         }
 
-        const dose = await undoLastDose(req.user.id, protocol_week_id, getServerTodayDateString());
+        const active = await getActiveProtocol(req.user.id);
+
+        if (!active) {
+            return res.status(409).send('There is no dose to undo');
+        }
+
+        const dose = await undoLastDose(active.patientProtocolId, protocol_week_id, getServerTodayDateString());
 
         if (!dose) {
             return res.status(409).send('There is no dose to undo');
         }
 
         res.status(200).json(dose);
+    } catch (e) {
+        res.status(500).send('Something went wrong');
+    }
+});
+
+router.get('/me/history', getUserFromToken, async (req, res) => {
+    try {
+        const rows = await getDoseHistory(req.user.id);
+
+        const coursesById = new Map();
+
+        for (const row of rows) {
+            if (!coursesById.has(row.patient_protocol_id)) {
+                coursesById.set(row.patient_protocol_id, {
+                    patient_protocol_id: row.patient_protocol_id,
+                    protocol_name: row.protocol_name,
+                    start_date: row.start_date,
+                    end_date: row.end_date,
+                    status: row.is_active ? 'active' : 'completed',
+                    expected: 0,
+                    logged: 0,
+                    weeks: [],
+                });
+            }
+
+            const course = coursesById.get(row.patient_protocol_id);
+
+            let week = course.weeks.find((w) => w.week_number === row.week_number);
+            if (!week) {
+                week = { week_number: row.week_number, expected: 0, logged: 0, days: [] };
+                course.weeks.push(week);
+            }
+
+            let day = week.days.find((d) => d.log_date === row.log_date);
+            if (!day) {
+                day = { log_date: row.log_date, is_today: row.is_today, expected: 0, logged: 0, medications: [] };
+                week.days.push(day);
+            }
+
+            day.medications.push({
+                name: row.medication_name,
+                eye: row.eye,
+                expected: row.expected,
+                logged: row.logged,
+            });
+
+            day.expected += row.expected;
+            day.logged += row.logged;
+            week.expected += row.expected;
+            week.logged += row.logged;
+            course.expected += row.expected;
+            course.logged += row.logged;
+        }
+
+        res.status(200).json({ courses: [...coursesById.values()] });
     } catch (e) {
         res.status(500).send('Something went wrong');
     }
