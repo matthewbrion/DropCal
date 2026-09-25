@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Protocols from './pages/Protocols';
 import Medications from './pages/Medications';
 import Physician from './pages/Physician';
+import PatientProfile from './pages/PatientProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/AppLayout';
 
@@ -29,6 +30,7 @@ function AppRoutes() {
           <Route path='/protocols' element={<Protocols />} />
           <Route path='/medications' element={<Medications />} />
           <Route path='/physician' element={<Physician />} />
+          <Route path='/physician/:patientId' element={<PatientProfile />} />
         </Route>
       </Route>
     </Routes>
