@@ -45,3 +45,13 @@ export async function undoLastDose(protocolWeekId) {
     }
     return res.json();
 }
+
+export async function getDoseHistory() {
+    const res = await fetch(`${BASE_URL}/me/history`, {
+        credentials: 'include',
+    });
+    if (!res.ok) {
+        throw new Error('Failed to fetch your dose history.');
+    }
+    return res.json();
+}
