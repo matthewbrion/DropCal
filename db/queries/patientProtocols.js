@@ -29,7 +29,7 @@ export async function getPatientProtocolById(patientProtocolId) {
         pw.eye,
         pw.frequency_per_day,
         m.id AS medication_id,
-        m.name AS medication_name,
+        concat_ws(' ', m.name, m.strength) AS medication_name,
         m.form AS medication_form
     FROM patient_protocols pp
     JOIN users u ON u.id = pp.patient_id
@@ -70,4 +70,68 @@ export async function assignProtocol(patientId, doctorId, protocolId, startDate)
     `;
     const { rows } = await db.query(sql, [patientId, doctorId, protocolId, startDate]);
     return rows[0];
+}
+
+//every course this patient has been assigned, past, present and future.
+//the history query only knows about days that have happened, so an upcoming course
+//would be invisible to it.
+export async function getCoursesForPatient(patientId) {
+    const sql = `
+    WITH courses AS (
+        SELECT pp.id AS patient_protocol_id,
+            pp.protocol_id,
+            pp.start_date,
+            p.name AS protocol_name,
+            (now() AT TIME ZONE u.timezone)::date AS today,
+            MAX(pw.week_number)::int AS total_weeks
+        FROM patient_protocols pp
+        JOIN users u ON u.id = pp.patient_id
+        JOIN protocols p ON p.id = pp.protocol_id
+        JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
+        WHERE pp.patient_id = $1
+        GROUP BY pp.id, pp.protocol_id, pp.start_date, p.name, u.timezone
+    )
+    SELECT c.patient_protocol_id,
+        c.protocol_id,
+        c.protocol_name,
+        c.total_weeks,
+        to_char(c.start_date, 'YYYY-MM-DD') AS start_date,
+        to_char(c.start_date + (c.total_weeks * 7 - 1), 'YYYY-MM-DD') AS end_date,
+        CASE
+            WHEN c.start_date > c.today THEN 'upcoming'
+            WHEN c.start_date + (c.total_weeks * 7) > c.today THEN 'active'
+            ELSE 'completed'
+        END AS status,
+        GREATEST(floor((c.today - c.start_date) / 7) + 1, 1)::int AS current_week
+    FROM courses c
+    ORDER BY c.start_date DESC
+    `;
+    const { rows } = await db.query(sql, [patientId]);
+    return rows;
+}
+
+//one row per medication per week, so the route can say what the dose is now and when it changes
+export async function getCourseMedications(patientId) {
+    const sql = `
+    SELECT pp.id AS patient_protocol_id,
+        m.id AS medication_id,
+        m.name,
+        m.strength,
+        m.brand_name,
+        m.form,
+        dc.patient_label,
+        dc.cap_color,
+        dc.cap_color_accent,
+        pw.week_number,
+        pw.eye,
+        pw.frequency_per_day
+    FROM patient_protocols pp
+    JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
+    JOIN medications m ON m.id = pw.medication_id
+    LEFT JOIN drug_classes dc ON dc.id = m.drug_class_id
+    WHERE pp.patient_id = $1
+    ORDER BY pp.id, m.name, pw.eye, pw.week_number
+    `;
+    const { rows } = await db.query(sql, [patientId]);
+    return rows;
 }

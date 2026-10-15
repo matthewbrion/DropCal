@@ -6,8 +6,12 @@ export async function getTodaysDoseSummary(patientProtocolId, weekNumber, logDat
         pp.id AS patient_protocol_id,
         pw.id AS protocol_week_id,
         m.id AS medication_id,
-        m.name AS medication_name,
+        concat_ws(' ', m.name, m.strength) AS medication_name,
+        m.brand_name,
         m.form AS medication_form,
+        dc.patient_label,
+        dc.cap_color,
+        dc.cap_color_accent,
         pw.eye,
         pw.frequency_per_day,
         COUNT(dl.id) AS logged_count,
@@ -17,12 +21,14 @@ export async function getTodaysDoseSummary(patientProtocolId, weekNumber, logDat
         ON pw.protocol_id = pp.protocol_id
         AND pw.week_number = $2
     JOIN medications m ON pw.medication_id = m.id
+    LEFT JOIN drug_classes dc ON dc.id = m.drug_class_id
     LEFT JOIN dose_logs dl
         ON dl.protocol_week_id = pw.id
         AND dl.patient_protocol_id = pp.id
         AND dl.log_date = $3
     WHERE pp.id = $1
-    GROUP BY pp.id, pw.id, m.id, m.name, m.form, pw.eye, pw.frequency_per_day
+    GROUP BY pp.id, pw.id, m.id, m.name, m.strength, m.brand_name, m.form,
+        dc.patient_label, dc.cap_color, dc.cap_color_accent, pw.eye, pw.frequency_per_day
     `;
     const { rows } = await db.query(sql, [patientProtocolId, weekNumber, logDate]);
     return rows;
@@ -111,7 +117,7 @@ export async function getDoseHistory(patientId) {
         to_char(d.day, 'YYYY-MM-DD') AS log_date,
         d.is_today,
         d.week_number,
-        m.name AS medication_name,
+        concat_ws(' ', m.name, m.strength) AS medication_name,
         pw.eye,
         pw.frequency_per_day AS expected,
         COUNT(dl.id)::int AS logged
@@ -125,7 +131,7 @@ export async function getDoseHistory(patientId) {
         AND dl.protocol_week_id = pw.id
         AND dl.log_date = d.day
     GROUP BY d.patient_protocol_id, d.protocol_name, d.start_date, d.end_date,
-        d.is_active, d.day, d.is_today, d.week_number, m.name, pw.eye, pw.frequency_per_day
+        d.is_active, d.day, d.is_today, d.week_number, m.name, m.strength, pw.eye, pw.frequency_per_day
     ORDER BY d.start_date DESC, d.week_number, d.day DESC, m.name
     `;
     const { rows } = await db.query(sql, [patientId]);

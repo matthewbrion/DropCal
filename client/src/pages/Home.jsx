@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMyProtocol, getTodaysDoseSummary, logDose, undoLastDose } from "../lib/patientProtocols";
 import { frequencyText, eyeLabel, timeText, dateText } from "../lib/medicationFormatting";
+import CapSwatch from '../components/CapSwatch';
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -33,6 +34,17 @@ function getGreeting() {
 
 function firstName(fullName) {
     return fullName.split(' ')[0];
+}
+
+//the banner headline: what the patient opened the app to find out
+function todayStatusLine(summary, notStarted, startsOn) {
+    if (notStarted) {
+        return `Your routine starts ${dateText(startsOn)}`;
+    }
+    if (summary.loggedCount >= summary.totalCount) {
+        return `All ${summary.totalCount} doses logged today`;
+    }
+    return `${summary.loggedCount} of ${summary.totalCount} doses logged today`;
 }
 
 function doseSummary(medications) {
@@ -109,24 +121,24 @@ export default function Home() {
     const ended = currentWeekNumber === null;
     const summary = ended ? null : doseSummary(today.medications);
     const notStarted = today.not_started === true;
+    const statusLine = ended ? null : todayStatusLine(summary, notStarted, today.starts_on);
 
     return (
         <div className="px-gutter-mobile md:px-gutter-desktop py-section-gap">
             <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
                 <header className="mb-flow-gap rounded-xl bg-primary p-card-padding text-on-primary">
-                    <h1 className="text-headline-lg">{getGreeting()}, {firstName(auth.user.name)}</h1>
-                    <p className="text-body-md mt-1">{protocol.protocol_name}</p>
-                    {!ended && (
+                    <p className="text-body-md">{getGreeting()}, {firstName(auth.user.name)}</p>
+                    {ended ? (
+                        <h1 className="text-headline-lg mt-1">{protocol.protocol_name}</h1>
+                    ) : (
                         <>
-                            <p className="text-body-md">
-                                {notStarted ? 'Starting soon' : `Week ${currentWeekNumber} of ${protocol.weeks.length}`}
-                            </p>
+                            <h1 className="text-headline-lg mt-1">{statusLine}</h1>
                             <div className="mt-flow-gap flex flex-col gap-3">
                                 <DoseDrops loggedCount={summary.loggedCount} totalCount={summary.totalCount} />
-                                <p className="text-body-lg">
-                                    {notStarted
-                                        ? `Your routine starts ${dateText(today.starts_on)}`
-                                        : `${summary.loggedCount} of ${summary.totalCount} doses logged today`}
+                                <p className="text-body-md">
+                                    {protocol.protocol_name} · {notStarted
+                                        ? 'Starting soon'
+                                        : `Week ${currentWeekNumber} of ${protocol.weeks.length}`}
                                 </p>
                             </div>
                         </>
@@ -235,12 +247,19 @@ function RoutineLogItem({ medication, isLast, notStarted, startsOn, onChange }) 
 
     return (
         <div className={`py-card-padding px-card-padding ${borderClass}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-headline-md text-ink">{medication.name}</p>
-                    <p className="text-body-md text-ink-muted">
-                        {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
-                    </p>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <CapSwatch color={medication.cap_color} accent={medication.cap_color_accent} />
+                    <div>
+                        <p className="text-headline-md text-ink">
+                            {medication.brand_name
+                                ? <>{medication.brand_name} <span className="text-body-md text-ink-muted">{medication.name}</span></>
+                                : medication.name}
+                        </p>
+                        <p className="text-body-md text-ink-muted">
+                            {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
+                        </p>
+                    </div>
                 </div>
                 <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
                     aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}

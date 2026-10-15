@@ -74,6 +74,21 @@ function CourseCard({ course, plan }) {
     );
 }
 
+//the weeks of one course, used on its own by My Routine and inside CourseCard here
+export function WeekList({ weeks, currentWeekNumber }) {
+    return (
+        <div>
+            {weeks.map((week) => (
+                <WeekSection
+                    key={week.week_number}
+                    week={week}
+                    isCurrent={week.week_number === currentWeekNumber}
+                />
+            ))}
+        </div>
+    );
+}
+
 function WeekSection({ week, isCurrent }) {
     const medications = week.planned ? week.planned.medications : medicationsFromDays(week.days);
     const hasHistory = week.days.length > 0;

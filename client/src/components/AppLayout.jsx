@@ -5,8 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 const patientLinks = [
     { to: '/', label: 'Home', end: true },
-    { to: '/protocols', label: 'Protocols' },
-    { to: '/medications', label: 'Medications' },
+    { to: '/routine', label: 'My Routine' },
 ];
 
 const doctorLinks = [

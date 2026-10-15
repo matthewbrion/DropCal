@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS patient_protocols;
 DROP TABLE IF EXISTS protocol_weeks;
 DROP TABLE IF EXISTS protocols;
 DROP TABLE IF EXISTS medications;
+DROP TABLE IF EXISTS drug_classes;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
@@ -15,10 +16,23 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- cap colours follow the drug class, per the AAO's colour coding of eye drop caps.
+-- some classes have no cap colour at all: ointments, tablets and single use vials.
+CREATE TABLE drug_classes (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    patient_label TEXT NOT NULL,
+    cap_color TEXT CHECK (cap_color IN ('pink', 'red', 'white', 'yellow', 'purple', 'orange', 'teal_green', 'dark_blue', 'tan')),
+    cap_color_accent TEXT CHECK (cap_color_accent IN ('pink', 'red', 'white', 'yellow', 'purple', 'orange', 'teal_green', 'dark_blue', 'tan'))
+);
+
 CREATE TABLE medications (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    form TEXT NOT NULL
+    strength TEXT,
+    brand_name TEXT,
+    form TEXT NOT NULL CHECK (form IN ('drop', 'ointment', 'tablet')),
+    drug_class_id INTEGER REFERENCES drug_classes(id)
 );
 
 CREATE TABLE protocols (

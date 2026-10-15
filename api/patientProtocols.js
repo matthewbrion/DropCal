@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { getCurrentPatientProtocolId, getPatientProtocolById, getActiveCourseForPatient, assignProtocol } from "#db/queries/patientProtocols";
+import { getCurrentPatientProtocolId, getPatientProtocolById, getActiveCourseForPatient, assignProtocol, getCoursesForPatient, getCourseMedications } from "#db/queries/patientProtocols";
 import { getTodaysDoseSummary, logDose, undoLastDose, getDoseHistory } from "#db/queries/doseLogs";
 import { getUserByEmail, getUserById } from "#db/queries/users";
 import getUserFromToken from "#middleware/getUserFromToken";
 import requireDoctor from "#middleware/requireDoctor";
 import { todayInZone } from "#utils/timezone";
 import { groupDoseHistory } from "#utils/doseHistory";
+import { buildCourseMedications } from "#utils/routine";
 
 const router = Router();
 
@@ -112,7 +113,11 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
         const medications = rows.map((row) => ({
             medication_id: row.medication_id,
             name: row.medication_name,
+            brand_name: row.brand_name,
             form: row.medication_form,
+            patient_label: row.patient_label,
+            cap_color: row.cap_color,
+            cap_color_accent: row.cap_color_accent,
             eye: row.eye,
             frequency_per_day: row.frequency_per_day,
             logged_count: Number(row.logged_count),
@@ -250,6 +255,44 @@ router.post('/', getUserFromToken, requireDoctor, async (req, res) => {
         if (e.code === '23503') {
             return res.status(400).send('That protocol does not exist');
         }
+        res.status(500).send('Something went wrong');
+    }
+});
+
+//everything the My Routine page needs in one call: the courses a patient has been
+//assigned, the drops in each, and the daily log for the ones that have started
+router.get('/me/routine', getUserFromToken, async (req, res) => {
+    try {
+        //one database connection is shared, so these run one after another rather than at once
+        const courses = await getCoursesForPatient(req.user.id);
+        const medicationRows = await getCourseMedications(req.user.id);
+        const historyRows = await getDoseHistory(req.user.id);
+
+        const history = groupDoseHistory(historyRows);
+
+        const withDetail = courses.map((course) => {
+            const logged = history.find((entry) => entry.patient_protocol_id === course.patient_protocol_id);
+            const rows = medicationRows.filter((row) => row.patient_protocol_id === course.patient_protocol_id);
+
+            return {
+                patient_protocol_id: course.patient_protocol_id,
+                protocol_name: course.protocol_name,
+                start_date: course.start_date,
+                end_date: course.end_date,
+                total_weeks: course.total_weeks,
+                //only a running course has a current week
+                current_week: course.status === 'active' ? course.current_week : null,
+                status: course.status,
+                expected: logged ? logged.expected : 0,
+                logged: logged ? logged.logged : 0,
+                //a finished course is about the log, not about what to take now
+                medications: course.status === 'completed' ? [] : buildCourseMedications(rows, course),
+                weeks: logged ? logged.weeks : [],
+            };
+        });
+
+        res.status(200).json({ courses: withDetail });
+    } catch (e) {
         res.status(500).send('Something went wrong');
     }
 });
