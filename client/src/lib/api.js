@@ -1,10 +1,13 @@
 const BASE_URL = '/api/auth';
 
 export async function registerUser({ name, email, password }) {
+    //the browser knows the zone the patient is actually in; the server stores it
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     const res = await fetch(`${BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, timezone }),
     });
     if (res.status === 201) {
         return res.json();
