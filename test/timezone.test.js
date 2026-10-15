@@ -16,7 +16,7 @@ const AHEAD = 'Pacific/Kiritimati';
 const BEHIND = 'Etc/GMT+12';
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 

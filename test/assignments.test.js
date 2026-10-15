@@ -11,7 +11,7 @@ import db from '#db/client';
 //checks a patient sees, but cannot log, a routine that starts in the future
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 

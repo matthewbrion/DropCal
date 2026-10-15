@@ -11,7 +11,7 @@ import { buildCourseMedications } from '#utils/routine';
 //checks the routine endpoint describes upcoming, active and completed courses
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 

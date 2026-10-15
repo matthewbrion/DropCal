@@ -10,7 +10,7 @@ import db from '#db/client';
 //checks a patient is blocked, and that a doctor cannot read someone else's patient
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 

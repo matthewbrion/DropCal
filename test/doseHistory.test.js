@@ -10,7 +10,7 @@ import db from '#db/client';
 //checks totals add up and that a short day names the medication that was missed
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 
