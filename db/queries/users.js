@@ -1,20 +1,20 @@
 import db from "#db/client";
 
-export async function createUser(name, email, passwordHash, role) {
+export async function createUser(name, email, passwordHash, role, timezone) {
     const sql = `
     INSERT INTO users
-        (name, email, password_hash, role)
+        (name, email, password_hash, role, timezone)
     VALUES
-        ($1, $2, $3, $4)
-    RETURNING id, name, email, role, created_at
+        ($1, $2, $3, $4, $5)
+    RETURNING id, name, email, role, timezone, created_at
     `;
-    const { rows: [user] } = await db.query(sql, [name, email, passwordHash, role]);
+    const { rows: [user] } = await db.query(sql, [name, email, passwordHash, role, timezone]);
     return user;
 }
 
 export async function getUserByEmail(email) {
     const sql = `
-    SELECT id, name, email, password_hash, role, created_at
+    SELECT id, name, email, password_hash, role, timezone, created_at
     FROM users
     WHERE email = $1
     `;
@@ -24,7 +24,7 @@ export async function getUserByEmail(email) {
 
 export async function getUserById(id) {
   const sql = `
-  SELECT id, name, email, role
+  SELECT id, name, email, role, timezone
   FROM users
   WHERE id = $1
   `;

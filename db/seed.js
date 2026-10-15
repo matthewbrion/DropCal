@@ -74,9 +74,10 @@ async function seed() {
     try {
         await db.query(`TRUNCATE users, medications, protocols, protocol_weeks, patient_protocols RESTART IDENTITY CASCADE`);
         const hash = await bcrypt.hash('password123', 10);
-        const doctor = await createUser('Dr. Marcus Hayes', 'hayes@example.com', hash, 'doctor');
-        const patient = await createUser('Eleanor Vance', 'vance@example.com', hash, 'patient');
-        const patient2 = await createUser('David Chen', 'chen@example.com', hash, 'patient');
+        const timezone = 'America/Detroit';
+        const doctor = await createUser('Dr. Marcus Hayes', 'hayes@example.com', hash, 'doctor', timezone);
+        const patient = await createUser('Eleanor Vance', 'vance@example.com', hash, 'patient', timezone);
+        const patient2 = await createUser('David Chen', 'chen@example.com', hash, 'patient', timezone);
         
         const { rows: [pred] } = await db.query(
             `INSERT INTO medications

@@ -4,10 +4,11 @@ export async function getCurrentPatientProtocolId(patientId) {
     const sql = `
     SELECT pp.id
     FROM patient_protocols pp
+    JOIN users u ON u.id = pp.patient_id
     JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
     WHERE pp.patient_id = $1
-    GROUP BY pp.id, pp.start_date
-    ORDER BY (pp.start_date + (COUNT(DISTINCT pw.week_number) * 7)::int > CURRENT_DATE) DESC, pp.start_date DESC
+    GROUP BY pp.id, pp.start_date, u.timezone
+    ORDER BY (pp.start_date + (COUNT(DISTINCT pw.week_number) * 7)::int > (now() AT TIME ZONE u.timezone)::date) DESC, pp.start_date DESC
     LIMIT 1
     `;
     const { rows } = await db.query(sql, [patientId]);
@@ -19,6 +20,7 @@ export async function getPatientProtocolById(patientProtocolId) {
     SELECT
         pp.id AS patient_protocol_id,
         pp.start_date,
+        u.timezone,
         p.id AS protocol_id,
         p.name AS protocol_name,
         p.procedure,
@@ -30,6 +32,7 @@ export async function getPatientProtocolById(patientProtocolId) {
         m.name AS medication_name,
         m.form AS medication_form
     FROM patient_protocols pp
+    JOIN users u ON u.id = pp.patient_id
     JOIN protocols p ON pp.protocol_id = p.id
     JOIN protocol_weeks pw ON pw.protocol_id = p.id
     JOIN medications m ON pw.medication_id = m.id
@@ -46,10 +49,11 @@ export async function getActiveCourseForPatient(patientId) {
     const sql = `
     SELECT pp.id
     FROM patient_protocols pp
+    JOIN users u ON u.id = pp.patient_id
     JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
     WHERE pp.patient_id = $1
-    GROUP BY pp.id, pp.start_date
-    HAVING pp.start_date + (COUNT(DISTINCT pw.week_number) * 7)::int > CURRENT_DATE
+    GROUP BY pp.id, pp.start_date, u.timezone
+    HAVING pp.start_date + (COUNT(DISTINCT pw.week_number) * 7)::int > (now() AT TIME ZONE u.timezone)::date
     LIMIT 1
     `;
     const { rows } = await db.query(sql, [patientId]);

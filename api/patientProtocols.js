@@ -4,6 +4,7 @@ import { getTodaysDoseSummary, logDose, undoLastDose, getDoseHistory } from "#db
 import { getUserByEmail, getUserById } from "#db/queries/users";
 import getUserFromToken from "#middleware/getUserFromToken";
 import requireDoctor from "#middleware/requireDoctor";
+import { todayInZone } from "#utils/timezone";
 import { groupDoseHistory } from "#utils/doseHistory";
 
 const router = Router();
@@ -42,15 +43,7 @@ router.get('/me', getUserFromToken, async (req, res) => {
     }
 });
 
-function getServerTodayDateString() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-//same shape as getServerTodayDateString, for a date that came back from the database
+//for a date that came back from the database
 function toDateString(value) {
     const date = new Date(value);
     const year = date.getFullYear();
@@ -59,11 +52,16 @@ function toDateString(value) {
     return `${year}-${month}-${day}`;
 }
 
-function getCurrentWeekNumber(startDate, totalWeeks) {
-    const start = new Date(startDate);
-    const today = new Date();
-    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-    const weeksElapsed = Math.floor((today - start) / msPerWeek);
+function daysBetween(fromDateString, toDateString) {
+    const from = fromDateString.split('-');
+    const to = toDateString.split('-');
+    const fromUtc = Date.UTC(Number(from[0]), Number(from[1]) - 1, Number(from[2]));
+    const toUtc = Date.UTC(Number(to[0]), Number(to[1]) - 1, Number(to[2]));
+    return Math.floor((toUtc - fromUtc) / (24 * 60 * 60 * 1000));
+}
+
+function getCurrentWeekNumber(startDateString, totalWeeks, todayDateString) {
+    const weeksElapsed = Math.floor(daysBetween(startDateString, todayDateString) / 7);
     const currentWeek = weeksElapsed + 1;
 
     if (currentWeek > totalWeeks) {
@@ -84,11 +82,13 @@ async function getActiveProtocol(patientId) {
 
     const rows = await getPatientProtocolById(patientProtocolId);
     const totalWeeks = new Set(rows.map((row) => row.week_number)).size;
-    const currentWeekNumber = getCurrentWeekNumber(rows[0].start_date, totalWeeks);
+    //every date below is the patient's, worked out in the zone stored on their account
+    const today = todayInZone(rows[0].timezone);
     const startsOn = toDateString(rows[0].start_date);
-    const notStarted = startsOn > getServerTodayDateString();
+    const currentWeekNumber = getCurrentWeekNumber(startsOn, totalWeeks, today);
+    const notStarted = startsOn > today;
 
-    return { patientProtocolId, rows, currentWeekNumber, startsOn, notStarted };
+    return { patientProtocolId, rows, currentWeekNumber, startsOn, notStarted, today };
 }
 
 router.get('/me/today', getUserFromToken, async (req, res) => {
@@ -105,7 +105,7 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
 
         //before the start date the patient sees week one, but nothing can be logged yet
         const weekNumber = active.notStarted ? 1 : active.currentWeekNumber;
-        const logDate = active.notStarted ? active.startsOn : getServerTodayDateString();
+        const logDate = active.notStarted ? active.startsOn : active.today;
 
         const rows = await getTodaysDoseSummary(active.patientProtocolId, weekNumber, logDate);
 
@@ -154,7 +154,7 @@ router.post('/me/doses', getUserFromToken, async (req, res) => {
             return res.status(409).send('Your routine has not started yet');
         }
 
-        const dose = await logDose(active.patientProtocolId, protocol_week_id, active.currentWeekNumber, getServerTodayDateString());
+        const dose = await logDose(active.patientProtocolId, protocol_week_id, active.currentWeekNumber, active.today);
 
         if (!dose) {
             return res.status(409).send('No doses left to log today');
@@ -183,7 +183,7 @@ router.delete('/me/doses', getUserFromToken, async (req, res) => {
             return res.status(409).send('There is no dose to undo');
         }
 
-        const dose = await undoLastDose(active.patientProtocolId, protocol_week_id, getServerTodayDateString());
+        const dose = await undoLastDose(active.patientProtocolId, protocol_week_id, active.today);
 
         if (!dose) {
             return res.status(409).send('There is no dose to undo');

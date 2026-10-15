@@ -2,18 +2,20 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { createUser, getUserByEmail, getUserById } from '#db/queries/users';
 import { createToken } from '#utils/jwt';
+import { resolveTimeZone } from '#utils/timezone';
 import getUserFromToken from '#middleware/getUserFromToken';
 
 const router = Router();
 
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, timezone } = req.body;
         if (!email || !password) {
             return res.status(400).send('Email and password are required');
         }
         const passwordHash = await bcrypt.hash(password, 10);
-        const user = await createUser(name, email, passwordHash, 'patient');
+        //an unknown or missing zone falls back to the app default rather than being stored
+        const user = await createUser(name, email, passwordHash, 'patient', resolveTimeZone(timezone));
         res.status(201).json(user);
     } catch (e) {
         if (e.code === '23505') {
