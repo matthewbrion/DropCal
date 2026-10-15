@@ -1,6 +1,7 @@
 import db from '#db/client';
 import bcrypt from 'bcrypt';
 import { createUser } from '#db/queries/users';
+import { isLocalDatabase } from '#utils/localDatabase';
 
 async function seedDoseLogs(patientProtocolId, protocolId, startDate, totalWeeks) {
     const { rows: weeks } = await db.query(
@@ -257,6 +258,11 @@ async function seed() {
     } finally {
         await db.end();
     }
+}
+
+//during a test run, never seed a database that isn't on this machine
+if (process.env.VITEST && !isLocalDatabase(process.env.DATABASE_URL)) {
+    throw new Error('Refusing to seed a remote database during tests. Check DATABASE_URL in .env.test.');
 }
 
 await db.connect();

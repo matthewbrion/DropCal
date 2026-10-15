@@ -10,7 +10,7 @@ import db from '#db/client';
 //checks the daily limit, the undo, and that one patient cannot log for another
 
 beforeAll(async () => {
-    execSync('node --env-file=.env db/seed.js', { stdio: 'inherit' });
+    execSync('node db/seed.js', { stdio: 'inherit' });
     await db.connect();
 });
 
