@@ -11,8 +11,8 @@ reason to cut corners for time.
 
 | Branch | State |
 |---|---|
-| `main` | `331f342`. Deployed. Everything through the timezone work. |
-| `feature/ui-refinements` | Pushed, **PR open and unmerged**. Five commits: banner hierarchy, cap colours, My Routine. |
+| `main` | `5762993`. Deployed. Everything through banner hierarchy, cap colours and My Routine (PR #17, merged). |
+| `feature/ui-refinements` | PR #18 open: tests on a local database plus GitHub Actions. Merge with a merge commit. |
 | `dev` | Old brand branch, fully merged into main. Safe to delete. |
 | `feature/dose-history`, `feature/physician-patients`, `feature/physician-view`, `feature/patient-timezone` | All merged. Safe to delete. |
 
@@ -43,9 +43,10 @@ labels), `medications` (name / strength / brand_name / form / drug_class_id),
 `protocols`, `protocol_weeks` (week, medication, eye, frequency), `patient_protocols`,
 `dose_logs` (unique on patient_protocol + date + week + dose index).
 
-**67 tests across 9 files**, run against a real Postgres that they reseed. Currently they
-point at Render via `.env`, which means `npm test` wipes the deployed database and takes
-~90 seconds. Pointing tests at a local database is an open task.
+**67 tests across 9 files**, run against a local Postgres that they rebuild from
+`schema.sql` and reseed (~9 seconds). `npm test` reads `.env.test` (gitignored, local
+`dropcal_test`); a guard refuses any database that is not on this machine. GitHub Actions
+runs the same suite on every push and pull request.
 
 ## Decisions worth not re-litigating
 
@@ -71,9 +72,7 @@ point at Render via `.env`, which means `npm test` wipes the deployed database a
 3. **Single drop on the Home banner** looks odd when a patient is down to one dose a day.
 4. **Timezone selector on Profile** — a patient who moves cannot fix their zone.
 5. **Nav touch targets** are ~40px, under the 44pt minimum.
-6. **`.github/workflows/test.yml` is nested inside `test/`**, so GitHub never runs it.
-7. **Tests point at the deployed database** (see above).
-8. **`docs/DESIGN.md` is empty.**
+6. **`docs/DESIGN.md` is empty.**
 
 ## Working rules
 
