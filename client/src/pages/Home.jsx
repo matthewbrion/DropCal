@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMyProtocol, getTodaysDoseSummary, logDose, undoLastDose } from "../lib/patientProtocols";
 import { frequencyText, eyeLabel, timeText, dateText } from "../lib/medicationFormatting";
+import CapSwatch from '../components/CapSwatch';
 
 function getCurrentWeekNumber(startDate, totalWeeks) {
     const start = new Date(startDate);
@@ -246,12 +247,19 @@ function RoutineLogItem({ medication, isLast, notStarted, startsOn, onChange }) 
 
     return (
         <div className={`py-card-padding px-card-padding ${borderClass}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-headline-md text-ink">{medication.name}</p>
-                    <p className="text-body-md text-ink-muted">
-                        {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
-                    </p>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <CapSwatch color={medication.cap_color} accent={medication.cap_color_accent} />
+                    <div>
+                        <p className="text-headline-md text-ink">
+                            {medication.brand_name
+                                ? <>{medication.brand_name} <span className="text-body-md text-ink-muted">{medication.name}</span></>
+                                : medication.name}
+                        </p>
+                        <p className="text-body-md text-ink-muted">
+                            {frequencyText(medication.frequency_per_day)} · {eyeLabel(medication.eye)}
+                        </p>
+                    </div>
                 </div>
                 <div className={`h-touch-target w-touch-target rounded-full flex items-center justify-center transition-colors ${statusBackground}`}
                     aria-label={`${medication.logged_count} of ${medication.frequency_per_day} logged today`}

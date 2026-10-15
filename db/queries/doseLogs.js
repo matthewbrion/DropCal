@@ -7,7 +7,11 @@ export async function getTodaysDoseSummary(patientProtocolId, weekNumber, logDat
         pw.id AS protocol_week_id,
         m.id AS medication_id,
         concat_ws(' ', m.name, m.strength) AS medication_name,
+        m.brand_name,
         m.form AS medication_form,
+        dc.patient_label,
+        dc.cap_color,
+        dc.cap_color_accent,
         pw.eye,
         pw.frequency_per_day,
         COUNT(dl.id) AS logged_count,
@@ -17,12 +21,14 @@ export async function getTodaysDoseSummary(patientProtocolId, weekNumber, logDat
         ON pw.protocol_id = pp.protocol_id
         AND pw.week_number = $2
     JOIN medications m ON pw.medication_id = m.id
+    LEFT JOIN drug_classes dc ON dc.id = m.drug_class_id
     LEFT JOIN dose_logs dl
         ON dl.protocol_week_id = pw.id
         AND dl.patient_protocol_id = pp.id
         AND dl.log_date = $3
     WHERE pp.id = $1
-    GROUP BY pp.id, pw.id, m.id, m.name, m.strength, m.form, pw.eye, pw.frequency_per_day
+    GROUP BY pp.id, pw.id, m.id, m.name, m.strength, m.brand_name, m.form,
+        dc.patient_label, dc.cap_color, dc.cap_color_accent, pw.eye, pw.frequency_per_day
     `;
     const { rows } = await db.query(sql, [patientProtocolId, weekNumber, logDate]);
     return rows;

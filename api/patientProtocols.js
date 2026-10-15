@@ -112,7 +112,11 @@ router.get('/me/today', getUserFromToken, async (req, res) => {
         const medications = rows.map((row) => ({
             medication_id: row.medication_id,
             name: row.medication_name,
+            brand_name: row.brand_name,
             form: row.medication_form,
+            patient_label: row.patient_label,
+            cap_color: row.cap_color,
+            cap_color_accent: row.cap_color_accent,
             eye: row.eye,
             frequency_per_day: row.frequency_per_day,
             logged_count: Number(row.logged_count),

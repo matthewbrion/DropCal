@@ -26,6 +26,18 @@
   --color-primary-surface: #EBF4F7;
   --color-on-primary: #FFFFFF;
 
+  /* cap colours are facts about a physical bottle, so they are the same in both themes.
+     taken from the AAO's colour coding of eye drop caps. */
+  --color-cap-pink: #F2A2C0;
+  --color-cap-red: #D7352C;
+  --color-cap-white: #FFFFFF;
+  --color-cap-yellow: #F2C230;
+  --color-cap-purple: #7E57A8;
+  --color-cap-orange: #E8862A;
+  --color-cap-teal_green: #17A0A0;
+  --color-cap-dark_blue: #1F3C88;
+  --color-cap-tan: #C9A277;
+
   --color-success: #487957;
   --color-success-surface: #F0F5F2;
   --color-on-success: #FFFFFF;
