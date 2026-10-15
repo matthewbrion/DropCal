@@ -55,3 +55,13 @@ export async function getDoseHistory() {
     }
     return res.json();
 }
+
+export async function getMyRoutine() {
+    const res = await fetch(`${BASE_URL}/me/routine`, {
+        credentials: 'include',
+    });
+    if (!res.ok) {
+        throw new Error('Failed to fetch your routine.');
+    }
+    return res.json();
+}

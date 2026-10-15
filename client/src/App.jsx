@@ -5,8 +5,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import Protocols from './pages/Protocols';
-import Medications from './pages/Medications';
+import MyRoutine from './pages/MyRoutine';
 import Physician from './pages/Physician';
 import PatientProfile from './pages/PatientProfile';
 import AssignPatient from './pages/AssignPatient';
@@ -28,8 +27,9 @@ function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path='/' element={isDoctor ? <Navigate to='/physician' replace /> : <Home />} />
           <Route path='/profile' element={<Profile />} />
-          <Route path='/protocols' element={<Protocols />} />
-          <Route path='/medications' element={<Medications />} />
+          <Route path='/routine' element={<MyRoutine />} />
+          <Route path='/protocols' element={<Navigate to='/routine' replace />} />
+          <Route path='/medications' element={<Navigate to='/routine' replace />} />
           <Route path='/physician' element={isDoctor ? <Physician /> : <Navigate to='/' replace />} />
           <Route path='/physician/assign' element={isDoctor ? <AssignPatient /> : <Navigate to='/' replace />} />
           <Route path='/physician/:patientId' element={<PatientProfile />} />
