@@ -11,7 +11,7 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('doctor', 'patient')),
-    timezone TEXT,
+    timezone TEXT NOT NULL DEFAULT 'America/New_York',
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 

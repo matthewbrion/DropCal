@@ -76,12 +76,15 @@ export async function getDoseHistory(patientId) {
             pp.protocol_id,
             pp.start_date,
             p.name AS protocol_name,
+            --the patient's own today, not the server's
+            (now() AT TIME ZONE u.timezone)::date AS today,
             MAX(pw.week_number) AS total_weeks
         FROM patient_protocols pp
+        JOIN users u ON u.id = pp.patient_id
         JOIN protocols p ON p.id = pp.protocol_id
         JOIN protocol_weeks pw ON pw.protocol_id = pp.protocol_id
         WHERE pp.patient_id = $1
-        GROUP BY pp.id, pp.protocol_id, pp.start_date, p.name
+        GROUP BY pp.id, pp.protocol_id, pp.start_date, p.name, u.timezone
     ),
     days AS (
         SELECT c.id AS patient_protocol_id,
@@ -89,14 +92,14 @@ export async function getDoseHistory(patientId) {
             c.protocol_name,
             to_char(c.start_date, 'YYYY-MM-DD') AS start_date,
             to_char(c.start_date + (c.total_weeks * 7 - 1)::int, 'YYYY-MM-DD') AS end_date,
-            (c.start_date + (c.total_weeks * 7)::int > CURRENT_DATE) AS is_active,
+            (c.start_date + (c.total_weeks * 7)::int > c.today) AS is_active,
             gs::date AS day,
-            (gs::date = CURRENT_DATE) AS is_today,
+            (gs::date = c.today) AS is_today,
             (floor((gs::date - c.start_date) / 7) + 1)::int AS week_number
         FROM courses c
         CROSS JOIN LATERAL generate_series(
             c.start_date,
-            LEAST(c.start_date + (c.total_weeks * 7 - 1)::int, CURRENT_DATE),
+            LEAST(c.start_date + (c.total_weeks * 7 - 1)::int, c.today),
             interval '1 day'
         ) AS gs
     )
