@@ -41,6 +41,7 @@ function patientSummarySql(patientFilter) {
     FROM active a
     LEFT JOIN protocol_weeks pw
         ON a.is_active
+        AND a.start_date <= CURRENT_DATE
         AND pw.protocol_id = a.protocol_id
         AND pw.week_number = a.current_week
     LEFT JOIN dose_logs dl

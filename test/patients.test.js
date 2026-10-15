@@ -120,3 +120,56 @@ describe('GET /api/patients/:patientId', () => {
         expect(res.status).toBe(404);
     });
 });
+
+describe('GET /api/patients/:patientId/history', () => {
+    it('rejects a request with no cookie', async () => {
+        const res = await request(app).get('/api/patients/2/history');
+
+        expect(res.status).toBe(401);
+    });
+
+    it('rejects a patient', async () => {
+        const cookie = await loginAs('vance@example.com', 'password123');
+
+        const res = await request(app)
+            .get('/api/patients/2/history')
+            .set('Cookie', cookie);
+
+        expect(res.status).toBe(403);
+    });
+
+    it('returns 404 for someone the doctor did not assign', async () => {
+        const cookie = await loginAs('hayes@example.com', 'password123');
+
+        const res = await request(app)
+            .get('/api/patients/1/history')
+            .set('Cookie', cookie);
+
+        expect(res.status).toBe(404);
+    });
+
+    it('gives the doctor the same history the patient sees', async () => {
+        const doctorCookie = await loginAs('hayes@example.com', 'password123');
+        const patientCookie = await loginAs('vance@example.com', 'password123');
+
+        const list = await request(app)
+            .get('/api/patients')
+            .set('Cookie', doctorCookie);
+        const vance = list.body.patients.find((patient) => patient.email === 'vance@example.com');
+
+        const doctorView = await request(app)
+            .get(`/api/patients/${vance.patient_id}/history`)
+            .set('Cookie', doctorCookie);
+        const patientView = await request(app)
+            .get('/api/patient-protocols/me/history')
+            .set('Cookie', patientCookie);
+
+        expect(doctorView.status).toBe(200);
+        expect(doctorView.body).toEqual(patientView.body);
+
+        //the completed ulcer taper never moves, so its numbers are safe to assert
+        const completed = doctorView.body.courses.find((course) => course.status === 'completed');
+        expect(completed.expected).toBe(112);
+        expect(completed.logged).toBe(102);
+    });
+});

@@ -9,16 +9,16 @@ import Protocols from './pages/Protocols';
 import Medications from './pages/Medications';
 import Physician from './pages/Physician';
 import PatientProfile from './pages/PatientProfile';
+import AssignPatient from './pages/AssignPatient';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/AppLayout';
+import LoadingScreen from './components/LoadingScreen';
 
 function AppRoutes() {
   const { loading, user } = useAuth();
   const isDoctor = user?.role === 'doctor';
   if (loading) {
-    return <div className='min-h-screen bg-surface flex items-center justify-center'>
-      <p className='text-body-lg text-ink-muted'>Loading...</p>
-    </div>
+    return <LoadingScreen message='Loading...' />
   }
   return (
     <Routes>
@@ -31,6 +31,7 @@ function AppRoutes() {
           <Route path='/protocols' element={<Protocols />} />
           <Route path='/medications' element={<Medications />} />
           <Route path='/physician' element={isDoctor ? <Physician /> : <Navigate to='/' replace />} />
+          <Route path='/physician/assign' element={isDoctor ? <AssignPatient /> : <Navigate to='/' replace />} />
           <Route path='/physician/:patientId' element={<PatientProfile />} />
         </Route>
       </Route>

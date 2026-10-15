@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getPatient } from '../lib/patients';
+import { getPatient, getPatientHistory } from '../lib/patients';
 import { dateText } from '../lib/medicationFormatting';
+import AssignProtocolForm from '../components/AssignProtocolForm';
+import DoseHistory from '../components/DoseHistory';
 
 export default function PatientProfile() {
     const auth = useAuth();
     const { patientId } = useParams();
     const [patient, setPatient] = useState(null);
+    const [history, setHistory] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -20,6 +23,22 @@ export default function PatientProfile() {
             .catch((e) => setError(e.message))
             .finally(() => setLoading(false));
     }, [auth.loading, patientId]);
+
+    useEffect(() => {
+        if (auth.loading) {
+            return;
+        }
+        getPatientHistory(patientId)
+            .then((data) => setHistory(data.courses))
+            .catch(() => setHistory([]));
+    }, [auth.loading, patientId]);
+
+    function refreshPatient() {
+        return Promise.all([
+            getPatient(patientId).then(setPatient),
+            getPatientHistory(patientId).then((data) => setHistory(data.courses)),
+        ]);
+    }
 
     if (auth.loading || loading) {
         return (
@@ -69,6 +88,21 @@ export default function PatientProfile() {
                             {patient.logged_today} of {patient.expected_today} doses logged
                         </p>
                     </div>
+                )}
+
+                {history && history.length > 0 && (
+                    <>
+                        <h2 className="text-headline-md text-ink mt-flow-gap">Dose history</h2>
+                        <DoseHistory courses={history} plan={null} />
+                    </>
+                )}
+
+                {patient.is_active ? (
+                    <p className="text-body-md text-ink-muted">
+                        You can assign a new routine once this one has finished.
+                    </p>
+                ) : (
+                    <AssignProtocolForm patientId={patient.patient_id} onAssigned={refreshPatient} />
                 )}
             </div>
         </div>

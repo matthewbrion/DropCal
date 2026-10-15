@@ -37,10 +37,16 @@ export default function Physician() {
 
     if (patients.length === 0) {
         return (
-            <div className="flex items-center justify-center px-gutter-mobile py-section-gap">
+            <div className="flex flex-col items-center justify-center gap-flow-gap px-gutter-mobile py-section-gap">
                 <p className="text-body-lg text-ink-muted text-center">
                     You haven't assigned a routine to anyone yet.
                 </p>
+                <Link
+                    to="/physician/assign"
+                    className="rounded-md bg-primary px-4 py-3 text-label-md font-semibold text-on-primary"
+                >
+                    Add a patient
+                </Link>
             </div>
         );
     }
@@ -48,11 +54,19 @@ export default function Physician() {
     return (
         <div className="px-gutter-mobile md:px-gutter-desktop py-section-gap">
             <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
-                <header>
-                    <h1 className="text-headline-lg text-ink">My Patients</h1>
-                    <p className="text-body-md text-ink-muted mt-1">
-                        {patients.length === 1 ? '1 patient' : `${patients.length} patients`} with a routine you assigned.
-                    </p>
+                <header className="flex items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-headline-lg text-ink">My Patients</h1>
+                        <p className="text-body-md text-ink-muted mt-1">
+                            {patients.length === 1 ? '1 patient' : `${patients.length} patients`} with a routine you assigned.
+                        </p>
+                    </div>
+                    <Link
+                        to="/physician/assign"
+                        className="shrink-0 rounded-md bg-primary px-4 py-3 text-label-md font-semibold text-on-primary whitespace-nowrap"
+                    >
+                        Add a patient
+                    </Link>
                 </header>
                 <div className="bg-surface-card rounded-md">
                     {patients.map((patient, i) => (
