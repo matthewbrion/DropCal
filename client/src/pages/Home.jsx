@@ -35,6 +35,17 @@ function firstName(fullName) {
     return fullName.split(' ')[0];
 }
 
+//the banner headline: what the patient opened the app to find out
+function todayStatusLine(summary, notStarted, startsOn) {
+    if (notStarted) {
+        return `Your routine starts ${dateText(startsOn)}`;
+    }
+    if (summary.loggedCount >= summary.totalCount) {
+        return `All ${summary.totalCount} doses logged today`;
+    }
+    return `${summary.loggedCount} of ${summary.totalCount} doses logged today`;
+}
+
 function doseSummary(medications) {
     let loggedCount = 0;
     let totalCount = 0;
@@ -109,24 +120,24 @@ export default function Home() {
     const ended = currentWeekNumber === null;
     const summary = ended ? null : doseSummary(today.medications);
     const notStarted = today.not_started === true;
+    const statusLine = ended ? null : todayStatusLine(summary, notStarted, today.starts_on);
 
     return (
         <div className="px-gutter-mobile md:px-gutter-desktop py-section-gap">
             <div className="max-w-[640px] mx-auto flex flex-col gap-flow-gap">
                 <header className="mb-flow-gap rounded-xl bg-primary p-card-padding text-on-primary">
-                    <h1 className="text-headline-lg">{getGreeting()}, {firstName(auth.user.name)}</h1>
-                    <p className="text-body-md mt-1">{protocol.protocol_name}</p>
-                    {!ended && (
+                    <p className="text-body-md">{getGreeting()}, {firstName(auth.user.name)}</p>
+                    {ended ? (
+                        <h1 className="text-headline-lg mt-1">{protocol.protocol_name}</h1>
+                    ) : (
                         <>
-                            <p className="text-body-md">
-                                {notStarted ? 'Starting soon' : `Week ${currentWeekNumber} of ${protocol.weeks.length}`}
-                            </p>
+                            <h1 className="text-headline-lg mt-1">{statusLine}</h1>
                             <div className="mt-flow-gap flex flex-col gap-3">
                                 <DoseDrops loggedCount={summary.loggedCount} totalCount={summary.totalCount} />
-                                <p className="text-body-lg">
-                                    {notStarted
-                                        ? `Your routine starts ${dateText(today.starts_on)}`
-                                        : `${summary.loggedCount} of ${summary.totalCount} doses logged today`}
+                                <p className="text-body-md">
+                                    {protocol.protocol_name} · {notStarted
+                                        ? 'Starting soon'
+                                        : `Week ${currentWeekNumber} of ${protocol.weeks.length}`}
                                 </p>
                             </div>
                         </>
