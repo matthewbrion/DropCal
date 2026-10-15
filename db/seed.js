@@ -70,31 +70,97 @@ async function seedDoseLogs(patientProtocolId, protocolId, startDate, totalWeeks
     );
 }
 
+//cap colours as published by the AAO, plus the plain words a patient would use.
+//a null cap colour means the class has no coloured cap: ointments, tablets, single use vials.
+async function seedDrugClasses() {
+    const classes = [
+        ['corticosteroid', 'Steroid', 'pink', 'white'],
+        ['corticosteroid_strong', 'Steroid', 'pink', null],
+        ['fluoroquinolone', 'Antibiotic', 'tan', null],
+        ['aminoglycoside_steroid', 'Antibiotic and steroid', 'pink', 'white'],
+        ['polymyxin_combination', 'Antibiotic', null, null],
+        ['macrolide', 'Antibiotic', null, null],
+        ['prostaglandin_analog', 'Eye pressure', 'teal_green', null],
+        ['beta_blocker', 'Eye pressure', 'yellow', null],
+        ['alpha_agonist', 'Eye pressure', 'purple', null],
+        ['carbonic_anhydrase_inhibitor', 'Eye pressure', 'orange', null],
+        ['cai_beta_blocker', 'Eye pressure', 'white', 'dark_blue'],
+        ['alpha_beta_combination', 'Eye pressure', 'dark_blue', null],
+        ['cai_alpha_agonist', 'Eye pressure', null, null],
+        ['rho_kinase_inhibitor', 'Eye pressure', 'white', null],
+        ['mydriatic_cycloplegic', 'Dilating drop', 'red', null],
+        ['topical_anesthetic', 'Numbing drop', 'white', null],
+        ['nsaid', 'Anti-inflammatory', null, null],
+        ['antihistamine', 'Allergy drop', null, null],
+        ['lubricant', 'Lubricant', null, null],
+        ['supplement', 'Supplement', null, null],
+    ];
+
+    const ids = {};
+    for (const [name, label, cap, accent] of classes) {
+        const { rows: [row] } = await db.query(
+            `INSERT INTO drug_classes
+            (name, patient_label, cap_color, cap_color_accent)
+        VALUES
+            ($1, $2, $3, $4)
+        RETURNING id`,
+            [name, label, cap, accent]
+        );
+        ids[name] = row.id;
+    }
+    return ids;
+}
+
+//real medications and strengths, taken from an ophthalmology prescribing list
+async function seedMedications(classIds) {
+    const medications = [
+        ['Prednisolone Acetate', '1%', 'Pred Forte', 'drop', 'corticosteroid'],
+        ['Moxifloxacin', '0.5%', 'Vigamox', 'drop', 'fluoroquinolone'],
+        ['Ofloxacin', '0.3%', 'Ocuflox', 'drop', 'fluoroquinolone'],
+        ['Tobramycin-Dexamethasone', '0.3%-0.1%', 'TobraDex', 'drop', 'aminoglycoside_steroid'],
+        ['Polymyxin B-Trimethoprim', '10,000 units-1 mg/mL', 'Polytrim', 'drop', 'polymyxin_combination'],
+        ['Erythromycin', '0.5%', null, 'ointment', 'macrolide'],
+        ['Latanoprost', '0.005%', 'Xalatan', 'drop', 'prostaglandin_analog'],
+        ['Timolol Maleate', '0.5%', 'Timoptic', 'drop', 'beta_blocker'],
+        ['Timolol Maleate Gel', '0.5%', 'Timoptic-XE', 'drop', 'beta_blocker'],
+        ['Brimonidine', '0.2%', 'Alphagan', 'drop', 'alpha_agonist'],
+        ['Dorzolamide', '2%', 'Trusopt', 'drop', 'carbonic_anhydrase_inhibitor'],
+        ['Dorzolamide-Timolol', '2%-0.5%', 'Cosopt', 'drop', 'cai_beta_blocker'],
+        ['Brinzolamide-Brimonidine', '1%-0.2%', 'Simbrinza', 'drop', 'cai_alpha_agonist'],
+        ['Diclofenac', '0.1%', null, 'drop', 'nsaid'],
+        ['Ketotifen', '0.025%', 'Zaditor', 'drop', 'antihistamine'],
+        ['Ocular Lubricant', null, null, 'drop', 'lubricant'],
+        ['Ocular Multivitamin', null, null, 'tablet', 'supplement'],
+    ];
+
+    const ids = {};
+    for (const [name, strength, brand, form, className] of medications) {
+        const { rows: [row] } = await db.query(
+            `INSERT INTO medications
+            (name, strength, brand_name, form, drug_class_id)
+        VALUES
+            ($1, $2, $3, $4, $5)
+        RETURNING id`,
+            [name, strength, brand, form, classIds[className]]
+        );
+        ids[name.toLowerCase()] = row.id;
+    }
+    return ids;
+}
+
 async function seed() {
     try {
-        await db.query(`TRUNCATE users, medications, protocols, protocol_weeks, patient_protocols RESTART IDENTITY CASCADE`);
+        await db.query(`TRUNCATE users, drug_classes, medications, protocols, protocol_weeks, patient_protocols RESTART IDENTITY CASCADE`);
         const hash = await bcrypt.hash('password123', 10);
         const timezone = 'America/Detroit';
         const doctor = await createUser('Dr. Marcus Hayes', 'hayes@example.com', hash, 'doctor', timezone);
         const patient = await createUser('Eleanor Vance', 'vance@example.com', hash, 'patient', timezone);
         const patient2 = await createUser('David Chen', 'chen@example.com', hash, 'patient', timezone);
         
-        const { rows: [pred] } = await db.query(
-            `INSERT INTO medications
-            (name, form)
-        VALUES
-            ($1, $2)
-        RETURNING id`,
-            ['Prednisolone Acetate 1%', 'Eye drop']
-        );
-        const { rows: [moxi] } = await db.query(
-            `INSERT INTO medications
-            (name, form)
-        VALUES
-            ($1, $2)
-        RETURNING id`,
-            ['Moxifloxacin 0.5%', 'Eye drop']
-        );
+        const classIds = await seedDrugClasses();
+        const medIds = await seedMedications(classIds);
+        const pred = { id: medIds['prednisolone acetate'] };
+        const moxi = { id: medIds['moxifloxacin'] };
         const { rows: [protocol] } = await db.query(
             `INSERT INTO protocols
             (name, procedure)

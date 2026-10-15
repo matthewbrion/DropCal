@@ -29,7 +29,7 @@ export async function getPatientProtocolById(patientProtocolId) {
         pw.eye,
         pw.frequency_per_day,
         m.id AS medication_id,
-        m.name AS medication_name,
+        concat_ws(' ', m.name, m.strength) AS medication_name,
         m.form AS medication_form
     FROM patient_protocols pp
     JOIN users u ON u.id = pp.patient_id

@@ -25,7 +25,7 @@ export async function getProtocolById(protocolId) {
         pw.eye,
         pw.frequency_per_day,
         m.id AS medication_id,
-        m.name AS medication_name,
+        concat_ws(' ', m.name, m.strength) AS medication_name,
         m.form AS medication_form
     FROM protocols p
     JOIN protocol_weeks pw ON pw.protocol_id = p.id
