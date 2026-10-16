@@ -263,10 +263,12 @@ router.post('/', getUserFromToken, requireDoctor, async (req, res) => {
 //assigned, the drops in each, and the daily log for the ones that have started
 router.get('/me/routine', getUserFromToken, async (req, res) => {
     try {
-        //one database connection is shared, so these run one after another rather than at once
-        const courses = await getCoursesForPatient(req.user.id);
-        const medicationRows = await getCourseMedications(req.user.id);
-        const historyRows = await getDoseHistory(req.user.id);
+        //the pool gives each query its own connection, so all three run at once
+        const [courses, medicationRows, historyRows] = await Promise.all([
+            getCoursesForPatient(req.user.id),
+            getCourseMedications(req.user.id),
+            getDoseHistory(req.user.id),
+        ]);
 
         const history = groupDoseHistory(historyRows);
 

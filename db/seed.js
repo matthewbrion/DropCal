@@ -265,5 +265,4 @@ if (process.env.VITEST && !isLocalDatabase(process.env.DATABASE_URL)) {
     throw new Error('Refusing to seed a remote database during tests. Check DATABASE_URL in .env.test.');
 }
 
-await db.connect();
 await seed();

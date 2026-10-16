@@ -1,13 +1,9 @@
 //supertest found for automated API testing - https://github.com/forwardemail/supertest/blob/master/README.md
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '#app';
 import db from '#db/client';
-
-beforeAll(async () => {
-    await db.connect();
-});
 
 afterAll(async () => {
     await db.end();

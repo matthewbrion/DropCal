@@ -11,7 +11,6 @@ import db from '#db/client';
 
 beforeAll(async () => {
     execSync('node db/seed.js', { stdio: 'inherit' });
-    await db.connect();
 });
 
 afterAll(async () => {
