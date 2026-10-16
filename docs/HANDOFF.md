@@ -1,6 +1,6 @@
 # DropCal handoff
 
-Last updated 2026-10-15.
+Last updated 2026-10-16.
 
 Patient eye-drop adherence app. Patients log doses against a prescribed taper; doctors
 assign protocols and see adherence. Node/Express + raw `pg`, React + Vite + Tailwind v4.
@@ -11,14 +11,16 @@ reason to cut corners for time.
 
 | Branch | State |
 |---|---|
-| `main` | `5762993`. Deployed. Everything through banner hierarchy, cap colours and My Routine (PR #17, merged). |
-| `feature/ui-refinements` | PR #18 open: tests on a local database plus GitHub Actions. Merge with a merge commit. |
-| `dev` | Old brand branch, fully merged into main. Safe to delete. |
-| `feature/dose-history`, `feature/physician-patients`, `feature/physician-view`, `feature/patient-timezone` | All merged. Safe to delete. |
+| `main` | `8330e1e`. Deployed. Everything through the connection pool (PR #21). |
+| `dev` | Same commit as `main`. Day-to-day work happens here or on a feature branch off it. |
+
+All other branches are merged and deleted.
 
 **Watch the merge style.** PR #14 was squash-merged and silently left three commits behind
 on `main`; the physician work was missing from the live site for a week before anyone
 noticed. Use merge commits, and check `git log origin/main..<branch>` is empty afterwards.
+The "create a pull request" link that `git push` prints always targets `main`, which is
+the deployed branch, so check the base before creating the PR.
 
 ## Deployment
 
@@ -28,6 +30,8 @@ noticed. Use merge commits, and check `git log origin/main..<branch>` is empty a
 - **Postgres** on Render. `.env` holds the *external* URL and needs `?sslmode=require`
   appended for anything run locally; the deployed service uses the internal URL
 - Reseed with `node db/seed.js` (wipes and rebuilds; seed dates are relative to today)
+- `db/client.js` is a `pg.Pool`. The server no longer connects at startup, so a bad
+  `DATABASE_URL` shows up as errors in the request logs rather than a failed deploy
 
 ## What exists
 
@@ -65,14 +69,11 @@ runs the same suite on every push and pull request.
 
 ## Open items
 
-1. **`pg.Pool` instead of `pg.Client`** — every request shares one connection, so they
-   queue. The `/me/routine` route had to be made sequential because of it. Small change,
-   wide blast radius (seed, tests, server), deserves its own branch.
-2. **README** — the biggest gap for anyone arriving cold.
-3. **Single drop on the Home banner** looks odd when a patient is down to one dose a day.
-4. **Timezone selector on Profile** — a patient who moves cannot fix their zone.
-5. **Nav touch targets** are ~40px, under the 44pt minimum.
-6. **`docs/DESIGN.md` is empty.**
+1. **README** — the biggest gap for anyone arriving cold.
+2. **Single drop on the Home banner** looks odd when a patient is down to one dose a day.
+3. **Timezone selector on Profile** — a patient who moves cannot fix their zone.
+4. **Nav touch targets** are ~40px, under the 44pt minimum.
+5. **`docs/DESIGN.md` is empty.**
 
 ## Working rules
 
