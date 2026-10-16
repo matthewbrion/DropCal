@@ -17,7 +17,6 @@ const BEHIND = 'Etc/GMT+12';
 
 beforeAll(async () => {
     execSync('node db/seed.js', { stdio: 'inherit' });
-    await db.connect();
 });
 
 afterAll(async () => {
